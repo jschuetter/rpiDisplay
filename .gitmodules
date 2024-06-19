@@ -1,0 +1,3 @@
+[submodule "fonts/bitmap-fonts"]
+	path = fonts/bitmap-fonts
+	url = https://github.com/Tecate/bitmap-fonts
