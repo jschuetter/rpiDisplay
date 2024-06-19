@@ -155,4 +155,4 @@ dmypy.json
 cython_debug/
 
 # Project directories
-samples/ # Code samples for RPi RGB matrix driver
+samples/
