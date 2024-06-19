@@ -1,3 +1,9 @@
 [submodule "fonts/bitmap-fonts"]
 	path = fonts/bitmap-fonts
 	url = https://github.com/Tecate/bitmap-fonts
+[submodule "fonts/ibm"]
+	path = fonts/ibm
+	url = https://github.com/farsil/ibmfonts
+[submodule "fonts/spleen"]
+	path = fonts/spleen
+	url = https://github.com/fcambus/spleen
