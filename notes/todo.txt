@@ -1,0 +1,4 @@
+* Create starter modules
+* Create driver for cycling between modules
+	- Module init methods
+* Add dotenv pkg for storing RGBMatrix options

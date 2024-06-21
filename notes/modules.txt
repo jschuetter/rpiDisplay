@@ -1,0 +1,50 @@
+Modules:
+• Clock [Enable/disable alarm, set alarms]
+  • Flip clock
+  • Terminal clock (blinking cursor for seconds, type out time on change - change only or full rewrite?)
+  • Analog styles
+  • Digital dials?
+  • Star Wars (X Wing targeting computer theme)
+  • Harry Potter, Elite Dangerous?
+  • Time-of-day/weather conditions ambience (clock+weather report - combine with sunrise/sunset module?)
+  • Idle anims w/ clock(?)
+  • Alarms (set time, sound - option for music or ambience)
+  • Night mode - low brightness, simple clock (minimize enabled LEDs)
+  • World clock
+
+  • Character clocks — standard digital clock face w/ animated characters (interact with clock?)
+    • Baby Yoda/Mando, Star Wars droids, Jedi training remotes?, Untitled Goose?, 
+
+• Media [play/pause, skip track/10s]
+  • Spotify (continue scrolling through widgets? Shortcut to get back to player widget? Overlay on other widgets? - copy for other media)
+  • BT/AirPlay player??
+  • Audible
+  • Radio
+  • Ambience (find images/animations to pair) {Music/noise levels, enable visuals, etc.}
+  • “Radio station” ambience (Oga’s, etc. - see Star Wars Radio note; add visuals)
+
+• Misc
+  • Weather reports (w/ time of day ambience) [change city/theme?]
+  • MLB Scores (update from yesterday & present scores; combine with radio for “live feed”?)
+  • UK Sports (baseball) scores
+  • Sunrise/sunset animations (make/find? - real-world, Star Wars, LotR, et al?) [trigger background track]
+  • Calendar summary [scroll pages?]
+  • Faux “system diagnostic” animation? (3d hologram of actual system diagram with indicator lights, - or just schematic?)
+  • Other schematic animations? (Star Wars, Elite Dangerous, Harry Potter, etc.?)
+  • Star Wars news/weather reports/comms (cf. Star Tours)
+  • Idle animations (see below)
+  • Night sky tonight — show stars, planets, constellations, satellites (ISS) visible in certain compass sector of sky from current location
+    • Individual screens for locations of visible planets, ISS, etc.
+  • Moon phase 
+  • Orrery? (+ Night sky/overhead?)
+  • Countdown/up widget
+  • Traffic map & alerts?
+  • Liturgical calendar (incorporate into other modules?)
+  • Duolingo (streak total, weekly tracker, total xp, etc.)
+  • Ski report?
+  • Animated character - create character (human or animal? Both?), animate doing different activities
+
+Menu options - onboard & CLI
+- Clock settings: timescale, location (primary & alternates for world clock) - set for each style/module individually?
+- System settings: brightness (schedule brightness changes - incl. sunrise/set), media volume, alarm volume, menu color (keep color list)
+- Alarms
