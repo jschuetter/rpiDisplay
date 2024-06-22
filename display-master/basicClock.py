@@ -1,10 +1,15 @@
-#!/usr/bin/env python
+import sys
+sys.path.insert(1, "/home/pi/rpiDisplay/rgbmatrix-src/bindings/python")
+
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+import config 
+# Add RGBMatrix source code to system paths
+from config import SRC_PATH
+# sys.path.insert(1, SRC_PATH)
+
 import datetime as dt
 import time
 
-MATRIX_ROWS = 32
-MATRIX_COLS = 64
 DATE_X = 2
 DATE_Y = 8
 DATE_FORMAT = "%b %d, %Y"
@@ -15,15 +20,9 @@ TIME_FORMAT_12 = "%I:%M %p"
 MILITARY_TIME = True 
 TZ_EST = dt.timezone(dt.timedelta(hours=-4), name="EST")
 
-# Matrix config
-options = RGBMatrixOptions()
-options.hardware_mapping = "regular"
-options.rows = MATRIX_ROWS
-options.cols = MATRIX_COLS
-options.parallel = 1
-# options.brightness = 100
 
-matrix = RGBMatrix(options=options)
+# Load matrix from .env values
+matrix = config.matrix_from_env()
 
 # Load fonts
 timeFont = graphics.Font()

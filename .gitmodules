@@ -7,3 +7,6 @@
 [submodule "fonts/spleen"]
 	path = fonts/spleen
 	url = https://github.com/fcambus/spleen
+[submodule "rgbmatrix-src"]
+	path = rgbmatrix-src
+	url = https://github.com/hzeller/rpi-rgb-led-matrix/
