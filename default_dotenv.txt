@@ -1,0 +1,61 @@
+# GPIO mapping: "regular", "regular-pi1", "adafruit-hat", "adafruit-hat-pwm"
+GPIO_MAPPING = "regular"
+
+# Matrix dimensions (px)
+MATRIX_ROWS = 32
+MATRIX_COLS = 32
+# Number of matrices chained together
+CHAIN_LENGTH = 1
+# Number of parallel chains (int in <1..3>)
+PARALLEL = 1
+
+# Multiplexing type
+# 0=direct*; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 
+# 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8; 
+# 11=InversedZStripe; 12=P10Outdoor1R1G1-1; 13=P10Outdoor1R1G1-2; 14=P10Outdoor1R1G1-3; 
+# 15=P10CoremanMapper; 16=P8Outdoor1R1G1; 17=FlippedStripe; 18=P10Outdoor32x16HalfScan
+MUX = 0
+
+# Semicolon-separated list of pixel-mappers to arrange pixels
+# Optional parameters after colon
+# e.g. "U-mapper;Rotate:90"
+PX_MAP = ""
+
+# PWM bits (Default: 11)
+PWM_BITS = 11
+
+# Scan mode
+# 0 = progressive*; 1 = interlaced
+SCAN_MODE = 0
+# Row addressing type
+# 0 = default*; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct
+ADDR_TYPE = 0
+
+SHOW_REFRESH = 0
+# Limit refresh rate (frequency limit, Hz)
+# 0 = no limit*
+LIMIT_REFRESH = 0
+INVERT_DISP = 0
+# Switch if led colors are swapped
+RGB_SEQ = "RGB"
+
+# PWM nanoseconds for LSB (def. 130)
+PWM_LSB_NS = 130
+# Time dithering of lower bits (def. 0)
+PWM_DITHER_BITS = 0
+
+# Disable hardware pin-pulse generation
+NO_HW_PULSE = 0
+# For initializing special panels
+# LED_PNL_TYPE = ["FM6126A", "FM6127"]
+# Slowdown GPIO - for faster Pi's or slower panels 
+# int in <0..4>, def. 2 (Pi4); 1 (other Pis)
+# SLOWDOWN_GPIO = 2
+
+# Run as daemon
+DAEMON = 0
+# Don't drop privileges from "root" after init
+NO_DROP_PRIVS = 0
+# UID to drop privileges to (def. "daemon")
+DROP_PRIV_UID = "daemon"
+# GID to drop privileges to (def. "daemon")
