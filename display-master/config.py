@@ -1,3 +1,4 @@
+#!/bin/python
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from dotenv import load_dotenv
 import os

@@ -1,3 +1,4 @@
+#!/bin/python
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 import datetime as dt
 import time

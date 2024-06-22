@@ -14,6 +14,7 @@ There are two options for installing dependencies:
 	- All packages must also be installed with sudo as well
 	- Virtual environments *will not work*, as root user will not see packages installed in venv
 * N.B. if you need to uninstall the rgbmatrix pkg for any reason (outside a virtual environment), using pip uninstall will not work. The install files can be found under `/usr/local/lib/pythonX.X/dist-packages/` (X.X is usually 2.7 or 3.7). Run `sudo rm -rf rgbmatrix*` to remove the package.
+* If Python cannot find the dotenv module, uninstall it using `pip3 uninstall` and `pip uninstall`, then re-run the setup script or reinstall the dependency manually
 
 Font sources: 
 - bitmap-fonts: github.com/Tecate/bitmap-fonts
