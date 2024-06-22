@@ -1,14 +1,9 @@
-import sys
-sys.path.insert(1, "/home/pi/rpiDisplay/rgbmatrix-src/bindings/python")
-
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
-import config 
-# Add RGBMatrix source code to system paths
-from config import SRC_PATH
-# sys.path.insert(1, SRC_PATH)
-
 import datetime as dt
 import time
+
+import config 
+from config import FONTS_PATH
 
 DATE_X = 2
 DATE_Y = 8
@@ -26,9 +21,9 @@ matrix = config.matrix_from_env()
 
 # Load fonts
 timeFont = graphics.Font()
-timeFont.LoadFont("./fonts/basic/7x13B.bdf")
+timeFont.LoadFont(FONTS_PATH+"basic/7x13B.bdf")
 dateFont = graphics.Font()
-dateFont.LoadFont("./fonts/basic/5x7.bdf")
+dateFont.LoadFont(FONTS_PATH+"basic/5x7.bdf")
 fontColor = graphics.Color(255, 255, 255)
 
 def main():

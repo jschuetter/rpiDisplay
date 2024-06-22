@@ -9,4 +9,4 @@ popd
 
 # Install other dependencies
 python3 -m pip install --upgrade pip
-pip3 install -rU requirements.txt
+sudo pip3 install -U -r requirements.txt
