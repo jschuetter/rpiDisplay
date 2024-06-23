@@ -14,7 +14,7 @@ def matrix_from_env():
     options.panel_type = os.getenv("LED_PANEL_TYPE", "")
     options.rows = int(os.getenv("MATRIX_ROWS", 32))
     options.cols = int(os.getenv("MATRIX_COLS", 32))
-    options.chain_length = int(os.getenv("CHAIN_LENGTH"), 1)
+    options.chain_length = int(os.getenv("CHAIN_LENGTH", 1))
     options.parallel = int(os.getenv("PARALLEL", 1))
     options.multiplexing = int(os.getenv("MUX", 0))
     options.pixel_mapper_config = os.getenv("PX_MAP", "")
