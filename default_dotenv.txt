@@ -31,13 +31,15 @@ SCAN_MODE = 0
 # 0 = default*; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct
 ADDR_TYPE = 0
 
+INVERT_DISP = 0
+# Switch if led colors are swapped
+RGB_SEQ = "RGB"
 SHOW_REFRESH = 0
 # Limit refresh rate (frequency limit, Hz)
 # 0 = no limit*
 LIMIT_REFRESH = 0
-INVERT_DISP = 0
-# Switch if led colors are swapped
-RGB_SEQ = "RGB"
+# Brightness (def. 100)
+BRIGHTNESS = 100
 
 # PWM nanoseconds for LSB (def. 130)
 PWM_LSB_NS = 130
@@ -56,6 +58,11 @@ NO_HW_PULSE = 0
 DAEMON = 0
 # Don't drop privileges from "root" after init
 NO_DROP_PRIVS = 0
+
+"""
+# Options not in use: 
 # UID to drop privileges to (def. "daemon")
 DROP_PRIV_UID = "daemon"
 # GID to drop privileges to (def. "daemon")
+DROP_PRIV_GID = "daemon"
+"""
