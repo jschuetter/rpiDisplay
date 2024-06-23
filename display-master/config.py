@@ -19,22 +19,25 @@ def matrix_from_env():
     options.multiplexing = int(os.getenv("MUX"))
     options.pixel_mapper_config = os.getenv("PX_MAP")
     options.pwm_bits = int(os.getenv("PWM_BITS"))
-    # Scan mode? - os.getenv("SCAN_MODE")
+    options.scan_mode = os.getenv("SCAN_MODE")
     options.row_address_type =  int(os.getenv("ADDR_TYPE"))
-    # Invert display? - os.getenv("INVERT_COLORS")
+    options.inverse_colors = os.getenv("INVERT_COLORS")
     options.led_rgb_sequence = os.getenv("RGB_SEQ")
     options.pwm_lsb_nanoseconds = int(os.getenv("PWM_LSB_NS"))
-    # Dithering? - os.getenv("PWM_DITHER_BITS")
+    options.pwm_dither_bits = os.getenv("PWM_DITHER_BITS")
     options.show_refresh_rate = int(os.getenv("SHOW_REFRESH"))
-    # Refresh limit?
-    # Brightness?
+    options.limit_refresh_rate_hz = int(os.getenv("LIMIT_REFRESH"))
+    options.brightness = int(os.getenv("BRIGHTNESS"))
     if int(os.getenv("NO_HW_PULSE")):
         options.disable_hardware_pulsing = True
+    # Runtime options
     if os.getenv("SLOWDOWN_GPIO", None) != None:
         options.gpio_slowdown = int(os.getenv("SLOWDOWN_GPIO"))
+    if int(os.getenv("DAEMON")): 
+        options.daemon = 1
     if not int(os.getenv("NO_DROP_PRIVS")):
         options.drop_privileges=False
-    # Daemon?
+    
     # Drop priv UID/GID?
 
     return RGBMatrix(options = options)
