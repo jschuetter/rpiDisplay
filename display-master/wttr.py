@@ -5,6 +5,7 @@ import time
 import python_weather as weather
 import asyncio
 from PIL import Image
+import subprocess
 
 import config 
 from config import FONTS_PATH
@@ -14,8 +15,8 @@ TZ_EST = dt.timezone(dt.timedelta(hours=-4), name="EST")
 CLOCK_X = 40
 CLOCK_Y = 10
 TIME_FORMAT = "%-I:%M"
-TMP_X = 5
-TMP_Y = 15
+TMP_X = 0
+TMP_Y = 5
 
 BG_PATH = "../module-resources/weather/bg.bmp"
 
@@ -46,22 +47,17 @@ def set_bg(canvas):
 
 async def refresh(canvas):
     canvas.Clear()
-    set_bg(canvas)
     # Get & print current time
-    now = dt.datetime.now(tz=TZ_EST)
-    graphics.DrawText(canvas, clockFont, CLOCK_X, CLOCK_Y, fontColor, 
-            now.strftime(TIME_FORMAT))
+    # now = dt.datetime.now(tz=TZ_EST)
+    # graphics.DrawText(canvas, clockFont, CLOCK_X, CLOCK_Y, fontColor, 
+    #         now.strftime(TIME_FORMAT))
     # Get & print weather report
-    cond = await get_weather(CITY_NAME)
-    # Draw weather icon
-    # canvas.SetImage(Image.open("../module-resources/weather/icon_sunny.bmp"), 5, 5)
-    graphics.DrawCircle(canvas, 5, 5, 7, graphics.Color(255, 230, 0))
-    # Write temperature values
-    xPos = graphics.DrawText(canvas, fontBig, TMP_X, TMP_Y, fontColor, (str(cond.temperature)+"\N{DEGREE SIGN}"))
-    xPos += 1
-    daily = cond.daily_forecasts
-    graphics.DrawText(canvas, fontSmall, xPos, TMP_Y-7, fontColor, ("Hi: " + str(daily.highest_temperature)))
-    graphics.DrawText(canvas, fontSmall, xPos, TMP_Y, fontColor, ("Lo: " + str(daily.lowest_temperature)))
+    result = subprocess.run(["curl","wttr.in?0QT&format=3"], capture_output=True, text=True)
+    yVal = TMP_Y
+    for line in iter(result.stdout.splitlines()): 
+        print(line)
+        graphics.DrawText(canvas, fontSmall, TMP_X, yVal, fontColor, line)
+        yVal += 7
 
     return canvas
 
@@ -78,6 +74,7 @@ async def main():
         if now.minute != dispTime.minute: 
             await refresh(nextCanvas)
             matrix.SwapOnVSync(nextCanvas)
+            dispTime = dt.datetime.now(tz=TZ_EST)
         time.sleep(2)
 
 if __name__=="__main__":

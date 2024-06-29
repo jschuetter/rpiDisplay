@@ -11,6 +11,7 @@ def matrix_from_env():
     options = RGBMatrixOptions()
 
     options.hardware_mapping = os.getenv("GPIO_MAPPING", "regular")
+    print(options.hardware_mapping)
     options.panel_type = os.getenv("LED_PANEL_TYPE", "")
     options.rows = int(os.getenv("MATRIX_ROWS", 32))
     options.cols = int(os.getenv("MATRIX_COLS", 32))
@@ -28,14 +29,14 @@ def matrix_from_env():
     options.show_refresh_rate = int(os.getenv("SHOW_REFRESH", 0))
     options.limit_refresh_rate_hz = int(os.getenv("LIMIT_REFRESH", 0))
     options.brightness = int(os.getenv("BRIGHTNESS", 100))
-    if int(os.getenv("NO_HW_PULSE")):
+    if int(os.getenv("NO_HW_PULSE", 0)):
         options.disable_hardware_pulsing = True
     # Runtime options
     if os.getenv("SLOWDOWN_GPIO", None) != None:
         options.gpio_slowdown = int(os.getenv("SLOWDOWN_GPIO"))
-    if int(os.getenv("DAEMON")): 
+    if int(os.getenv("DAEMON", 0)): 
         options.daemon = 1
-    if not int(os.getenv("NO_DROP_PRIVS")):
+    if not int(os.getenv("NO_DROP_PRIVS", 0)):
         options.drop_privileges=False
     
     # Drop priv UID/GID?
