@@ -54,7 +54,9 @@ async def refresh(canvas):
         canvas.SetImage(icon.convert("RGB"))
 
     # Display weather data
-    graphics.DrawText(canvas, fontSmall, 25, 25, fontColor, resultDict["current_condition"][0]["temp_F"])
+    curCond = resultDict["current_condition"][0]
+    graphics.DrawText(canvas, fontBig, 25, 20, fontColor, curCond["temp_F"])
+    graphics.DrawText(canvas, fontSmall, 25, 30, fontColor, curCond["weatherDesc"][0]["value"])
     # yVal = TMPV_Y
     # for line in iter(result.stdout.splitlines()): 
     #     print(line)
