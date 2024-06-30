@@ -6,6 +6,7 @@ import python_weather as weather
 import asyncio
 from PIL import Image
 import subprocess
+import json
 
 import config 
 from config import FONTS_PATH
@@ -18,7 +19,7 @@ TIME_FORMAT = "%-I:%M"
 TMP_X = 0
 TMP_Y = 5
 
-BG_PATH = "../module-resources/weather/bg.bmp"
+RES_PATH = "../module-resources/weather/"
 
 # Load matrix from .env values
 matrix = config.matrix_from_env()
@@ -31,13 +32,6 @@ fontBig.LoadFont(FONTS_PATH+"basic/6x10.bdf")
 fontSmall = graphics.Font()
 fontSmall.LoadFont(FONTS_PATH+"basic/4x6.bdf")
 fontColor = graphics.Color(255, 255, 255)
-
-async def get_weather(city: str):
-    async with weather.Client(unit=weather.IMPERIAL) as client: 
-        localWeather = await client.get(city)
-        print(localWeather)
-        print(localWeather.current)
-        return localWeather.current
 
 def set_bg(canvas):
     with Image.open(BG_PATH) as img:
@@ -52,12 +46,20 @@ async def refresh(canvas):
     # graphics.DrawText(canvas, clockFont, CLOCK_X, CLOCK_Y, fontColor, 
     #         now.strftime(TIME_FORMAT))
     # Get & print weather report
-    result = subprocess.run(["curl","wttr.in?0QT&format=3"], capture_output=True, text=True)
-    yVal = TMP_Y
-    for line in iter(result.stdout.splitlines()): 
-        print(line)
-        graphics.DrawText(canvas, fontSmall, TMP_X, yVal, fontColor, line)
-        yVal += 7
+    jsonResult = subprocess.run(["curl","wttr.in?0QT&format=j1"], capture_output=True, text=True)
+    resultDict = json.loads(jsonResult.stdout)
+
+    # Add icon
+    with Image.open(RES_PATH+"sunny.bmp") as icon:
+        canvas.SetImage(icon.convert("RGB"))
+
+    # Display weather data
+    graphics.DrawText(canvas, fontSmall, 25, 25, fontColor, resultDict["current_condition"][0]["temp_F"])
+    # yVal = TMPV_Y
+    # for line in iter(result.stdout.splitlines()): 
+    #     print(line)
+    #     graphics.DrawText(canvas, fontSmall, TMP_X, yVal, fontColor, line)
+    #     yVal += 7
 
     return canvas
 
