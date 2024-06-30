@@ -11,6 +11,7 @@ from config import FONTS_PATH
 # CLI dependencies
 import cmd
 from modules.src import Elements
+# from modules.src.Elements import IconElement
 import json
 from re import escape
 import os
@@ -23,7 +24,12 @@ working = {}
 matrix = config.matrix_from_env()
 canvas = matrix.CreateFrameCanvas()
 
-ELEMENT_TYPES = ["IconElement", "ImageElement", "TextElement", "RectElement", "EllipseElement"]
+ELEMENT_TYPES = {"IconElement": Elements.IconElement, 
+        "ImageElement":None, 
+        "TextElement":None, 
+        "RectElement":None, 
+        "EllipseElement":None
+        }
 
 class ModuleEditor(cmd.Cmd):
     intro = "Welcome to Jaybird's rgbmatrix Module Editor. Type help or ? to list commands.\n"
@@ -86,7 +92,8 @@ class ModuleEditor(cmd.Cmd):
         global working
         # CHECK FOR OPEN COMP HERE
         elType = "IconElement"
-        newEl = Elements.IconElement("test element", "../weather/sunny.bmp", (0,0))
+        newEl = ELEMENT_TYPES["IconElement"]("test element", "../weather/sunny.bmp", (0,0))
+        # newEl = Elements.IconElement("test element", "../weather/sunny.bmp", (0,0))
 
         working["elements"].append(newEl)
         newEl.draw(canvas)
