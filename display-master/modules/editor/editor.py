@@ -12,9 +12,11 @@ from config import FONTS_PATH
 import cmd
 from modules.src import Elements
 # from modules.src.Elements import IconElement
-import json
+import os, json
 from re import escape
-import os
+import logging
+
+log = logging.getLogger(__name__)
 
 # Standard path to store JSON files at
 SRC_PATH = "./srcFiles"
@@ -24,11 +26,11 @@ working = {}
 matrix = config.matrix_from_env()
 canvas = matrix.CreateFrameCanvas()
 
-ELEMENT_TYPES = {"IconElement": Elements.IconElement, 
-        "ImageElement":None, 
-        "TextElement":None, 
-        "RectElement":None, 
-        "EllipseElement":None
+ELEMENT_TYPES = {"icon": Elements.IconElement, 
+        "image":None, 
+        "text":None, 
+        "rect":None, 
+        "ellipse":None
         }
 
 class ModuleEditor(cmd.Cmd):
@@ -37,18 +39,22 @@ class ModuleEditor(cmd.Cmd):
     file = None
 
     def do_new(self, line):
-        """Create new matrix composition
+        '''Create new matrix composition
 
         name: str
             Name of composition (for JSON storage)
-        parentDir: str
+        parentDir: str -- NOT IN USE
             Path of parent directory for JSON storage file
-        """
+        '''
 
         global working
 
-        name = "tempName"
+        # (name, parentDir) = (parse(line), SRC_PATH)
+        # Temporary override
+        # Need to figure out how to allow passing (parsing) optional parameters in CLI
+        (name,) = parse(line)
         parentDir = SRC_PATH
+        # 
         if not os.path.isdir(parentDir): 
             os.mkdir(parentDir)
 
@@ -59,11 +65,11 @@ class ModuleEditor(cmd.Cmd):
         working["json"] = {} 
 
     def do_open(self, line):
-        """Open matrix composition JSON file
+        '''Open matrix composition JSON file
 
         path: str
             Path of JSON file to open
-        """
+        '''
 
         global working
         path = os.path.join(SRC_PATH, "tempName.json")
@@ -72,28 +78,34 @@ class ModuleEditor(cmd.Cmd):
             working["json"] = json.load(file.read())
             working["elements"] = json_get_elements(working["json"])
 
-    def do_close(self, line):
-        """Close current working composition"""
+    def do_close(self):
+        'Close current working composition'
         global working, workingName, workingPath
         write_json()
         working = {}
 
-    def do_create(self, line):
-        """Create new element in current composition
+    def do_add(self, line):
+        '''Add new element to current composition
         
         elType: str
             Type of element to create
             See modules/src/Elements.py for element class definitions
-        name: str
+        elName: str
             Name of element to be created
             Must be unique among sibling elements
-        """
+        elArgs: *str
+            Arguments for element constructor (space-delimited)
+            See Element classes for details
+        '''
 
         global working
-        # CHECK FOR OPEN COMP HERE
-        elType = "IconElement"
-        newEl = ELEMENT_TYPES["IconElement"]("test element", "../weather/sunny.bmp", (0,0))
-        # newEl = Elements.IconElement("test element", "../weather/sunny.bmp", (0,0))
+        # Check for open composition
+        if not working: 
+            print("Must have open composition! \nUse `new` to create a comp or `open` to import one from JSON.")
+        # elType = "IconElement"
+        (elType, elName, *elArgs) = parse(line)
+        newEl = ELEMENT_TYPES[elType](elName, *elArgs)
+        # newEl = ELEMENT_TYPES[elType](elName, "../weather/sunny.bmp", (0,0))
 
         working["elements"].append(newEl)
         newEl.draw(canvas)
@@ -108,22 +120,29 @@ class ModuleEditor(cmd.Cmd):
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
         print("Closing ModuleEditor...")
+        self.do_close()
         canvas.Clear()
         matrix.SwapOnVSync(canvas)
         return True
 
+def parse(line: str) -> tuple:
+    'Convert space-delimited arguments to tuple of strings'
+    args = tuple(line.split())
+    log.debug(args)
+    return args
+
 def new_json():
-    """Generates fresh JSON template
+    '''Generates fresh JSON template
 
     Creates sub-dict for each class name in ELEMENT_TYPES
-    """
+    '''
     outDict = {}
     for t in ELEMENT_TYPES:
         outDict[t] = {}
     return outDict
 
 def write_json():
-    """Helper method for writing changes to JSON file"""
+    'Write changes to JSON file'
     global working
     with open(working["path"], "w") as file:
         json.dump(working["json"], file)

@@ -8,7 +8,6 @@ class Property:
     """Custom class for MatrixElement properties
 
     Allows adding use data along with each variable
-    - 
     - Allowed Property modes: 
         - l (literal): assignable by literal value only
         - s (scrollable): can scroll through list of allowed values in editor

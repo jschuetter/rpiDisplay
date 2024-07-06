@@ -5,7 +5,7 @@ import os
 
 FONTS_PATH = "../fonts/"
 
-def matrix_from_env():
+def matrix_from_env() -> RGBMatrix:
     # Load environment vars, create options object
     load_dotenv()
     options = RGBMatrixOptions()
