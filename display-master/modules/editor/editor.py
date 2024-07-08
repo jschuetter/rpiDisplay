@@ -125,7 +125,6 @@ class ModuleEditor(cmd.Cmd):
         #     print("Must provide valid element name!")
         #     return
 
-        print(args)
         elType = args[0]
         elArgs = args[1:]
         # (elType, elName, *elArgs) = args

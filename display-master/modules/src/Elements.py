@@ -89,10 +89,6 @@ class IconElement(MatrixElement):
         '''Tests validity of arguments. 
         Returns string response if invalid args. 
         Returns None if valid.'''
-        print(args)
-        print(type(args))
-        print(len(args))
-        print(len(cls.params))
         if len(args) < len(cls.params): 
             return "Incorrect number of args."
         if type(args[0]) is not str: 
@@ -101,7 +97,7 @@ class IconElement(MatrixElement):
             return "Invalid image path."
         elif not args[1].endswith(".bmp"):
             return "Image type must be .bmp (use Image class for pixel types)."
-        for e in args[2:3]:
+        for e in args[2:4]:
             try:
                 int(e)
             except ValueError: 
