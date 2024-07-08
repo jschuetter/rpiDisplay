@@ -43,7 +43,9 @@ class ModuleEditor(cmd.Cmd):
     def do_new(self, line):
         '''Create new matrix composition
 
-        name: str
+        Usage: new [compName] [parentDir - WIP]
+
+        compName: str
             Name of composition (for JSON storage)
         parentDir: str -- NOT IN USE
             Path of parent directory for JSON storage file
@@ -54,24 +56,22 @@ class ModuleEditor(cmd.Cmd):
         # (name, parentDir) = (parse(line), SRC_PATH)
         # Temporary override
         # Need to figure out how to allow passing (parsing) optional parameters in CLI
-        if not line: 
-            print("Must provide composition name!")
-            return
-
-        (name,) = parse(line)
+        (compName,) = parse(line)
         parentDir = SRC_PATH
         # 
         if not os.path.isdir(parentDir): 
             os.mkdir(parentDir)
 
         working = {}
-        working["name"] = name
-        working["path"] = os.path.join(parentDir,name + ".json")
+        working["name"] = compName
+        working["path"] = os.path.join(parentDir,compName + ".json")
         working["elements"] = []
         working["json"] = {} 
 
     def do_open(self, line):
         '''Open matrix composition JSON file
+
+        Usage: open [path]
 
         path: str
             Path of JSON file to open
@@ -108,27 +108,17 @@ class ModuleEditor(cmd.Cmd):
         if not working: 
             print("Must have open composition! \nUse `new` to create a comp or `open` to import one from JSON.")
             return
-        # elType = "IconElement"
+        
         log.debug(line)
-        # if line == "" or line == " ":
-        #     print("Select an element type to add:\n" + str(list(ELEMENT_TYPES.keys())))
-        #     return
-        # try: 
         args = parse(line)
         # Input validation
         if len(args) < 1 or args[0] not in ELEMENT_TYPES.keys():
             # Validate element type
             print("Select an element type to add:\n" + str(list(ELEMENT_TYPES.keys())))
             return
-        # elif len(args) < 2 or type(args[1]) is not str:
-        #     # Validate element name
-        #     print("Must provide valid element name!")
-        #     return
 
         elType = args[0]
         elArgs = args[1:]
-        # (elType, elName, *elArgs) = args
-        # If all arguments are valid, test arguments
         invalidArgs = ELEMENT_TYPES[elType].testArgs(*elArgs)
         if invalidArgs:
             print(invalidArgs)
@@ -137,20 +127,6 @@ class ModuleEditor(cmd.Cmd):
             return
         
         newEl = ELEMENT_TYPES[elType](*elArgs)
-        # except ValueError as ve:
-        #     log.debug(ve)
-        #     # Test each argument for validity
-        #     # If supplied element type is invalid, print valid types
-        #     if len(args) < 1 or args[0] not in ELEMENT_TYPES.keys():
-        #         print("Select an element type to add:\n" + str(list(ELEMENT_TYPES.keys())))
-        #     elif len(args) < 2 or type(args[1]) is not str:
-        #         print("Must provide valid element name!")
-        #     else:
-        #         # If all args are (apparently) valid, re-raise exception
-        #         raise
-        #         ELEMENT_TYPES[args[0]].print_docs()
-        #     return
-        # newEl = ELEMENT_TYPES[elType](elName, "../weather/sunny.bmp", (0,0))
 
         working["elements"].append(newEl)
         newEl.draw(canvas)
