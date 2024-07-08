@@ -122,8 +122,7 @@ class ModuleEditor(cmd.Cmd):
         invalidArgs = ELEMENT_TYPES[elType].testArgs(*elArgs)
         if invalidArgs:
             print(invalidArgs)
-            print("Usage: " + ELEMENT_TYPES[elType].__name__)
-            print(ELEMENT_TYPES[elType].params)
+            print(ELEMENT_TYPES[elType].docstr)
             return
         
         newEl = ELEMENT_TYPES[elType](*elArgs)

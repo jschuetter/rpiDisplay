@@ -15,9 +15,16 @@ def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict
         "description": desc, 
         "optional": optional
     }
+def print_params(params):
+    paramDocs = ""
+    for p in params:
+        print(p)
+        paramDocs += f"{p.get('name')}: {p.get('type')}\n\t{p.get('description')}\n\t" + \
+            f"Optional: {p.get('optional')}\n"
+    return paramDocs
 
 class Property:
-    """Custom class for MatrixElement properties
+    '''Custom class for MatrixElement properties
 
     Allows adding use data along with each variable
     - Allowed Property modes: 
@@ -26,11 +33,11 @@ class Property:
         - n (numeric): can use arrow keys to increment/decrement values
         - n2 (numeric tuple): can use arrow keys (left/right, up/down) to 
             increment/decrement each tuple value respectively
-    """
+    '''
 
     allowedModes = ["l", "s", "n", "n2"]
     def __init__(self, _value: Any, _mode: str = "l", _opt: list = []):
-        """
+        '''
         Parameters
         ----------
         _value: Any
@@ -40,7 +47,7 @@ class Property:
         _opt: list[str]
             list of available value options
             Required for "scrollable" mode
-        """
+        '''
 
         self.value = _value
         if _mode not in self.allowedModes: 
@@ -51,22 +58,15 @@ class Property:
         self.options = _opt
 
 class MatrixElement: 
-    params = [ add_param("name", str, "Name of Element - dev use only") ]
-    # @classmethod
-    # # def get_params(cls):
-    # #     return cls.params
-    # @classmethod
-    # def print_docs(cls):
-    #     print("Class: " + cls.__name__)
-    #     print(json.dumps(cls.params))
+    params = [add_param("name", str, "Name of Element object (dev only).")]
 
     def __init__(self, _name: str):
-        """
+        '''
         Parameters
         ----------
         _name: str
             Element name - must be unique among sibling Elements
-        """
+        '''
 
         self.name = _name
         self.group = []
@@ -79,11 +79,15 @@ class MatrixElement:
 # Requires .bmp filetype
 class IconElement(MatrixElement):
     params = MatrixElement.params + [
-        add_param("imgPath", str, "Path of default icon to display. \
-            May be changed later in program. Must be in .bmp format."),
-        add_param("x", int, "X-position of element. Defaults to 0.", optional=True),
-        add_param("y", int, "Y-position of element. Defaults to 0.", optional=True)
+        add_param("path", str, "Relative path to the default icon for this object. " +
+                  "Icon must be in .bmp format."),
+        add_param("x_pos", int, "X-coordinate of icon (top-left)."),
+        add_param("y_pos", int, "Y-coordinate of icon (top-left)")
     ]
+    docstr = "An icon in .bmp image format.\n\n" + \
+        "Usage: add icon [name] [path] [x_pos] [y_pos]\n\n" + \
+            print_params(params)
+    
     @classmethod
     def testArgs(cls, *args) -> int:
         '''Tests validity of arguments. 
@@ -106,7 +110,7 @@ class IconElement(MatrixElement):
         return None
 
     def __init__(self, _name: str, imgPath: str = "", x: str = "0", y: str = "0"):
-        """
+        '''
         Parameters
         ----------
         _name: str
@@ -115,7 +119,7 @@ class IconElement(MatrixElement):
             Path of .bmp file to show
         _pos: tuple[int, int]
             Tuple (x,y) of position to display image (coordinate of top-left of image)
-        """
+        '''
 
         super().__init__(_name)
         self.path = imgPath
