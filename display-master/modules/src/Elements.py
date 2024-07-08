@@ -3,6 +3,18 @@ from rgbmatrix import FrameCanvas
 from copy import deepcopy
 from typing import Any, NewType
 from PIL import Image
+import os, json
+
+def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict:
+    '''Helper method for creating parameter dictionaries more concisely
+    
+    Returns dict containing param data'''
+    return {
+        "name": name,
+        "type": type_,
+        "description": desc, 
+        "optional": optional
+    }
 
 class Property:
     """Custom class for MatrixElement properties
@@ -39,6 +51,15 @@ class Property:
         self.options = _opt
 
 class MatrixElement: 
+    params = [ add_param("name", str, "Name of Element - dev use only") ]
+    # @classmethod
+    # # def get_params(cls):
+    # #     return cls.params
+    # @classmethod
+    # def print_docs(cls):
+    #     print("Class: " + cls.__name__)
+    #     print(json.dumps(cls.params))
+
     def __init__(self, _name: str):
         """
         Parameters
@@ -57,7 +78,38 @@ class MatrixElement:
 # Element for displaying static bitmap images
 # Requires .bmp filetype
 class IconElement(MatrixElement):
-    def __init__(self, _name: str, imgPath: str = "", _pos: tuple = (0,0)):
+    params = MatrixElement.params + [
+        add_param("imgPath", str, "Path of default icon to display. \
+            May be changed later in program. Must be in .bmp format."),
+        add_param("x", int, "X-position of element. Defaults to 0.", optional=True),
+        add_param("y", int, "Y-position of element. Defaults to 0.", optional=True)
+    ]
+    @classmethod
+    def testArgs(cls, *args) -> int:
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        print(args)
+        print(type(args))
+        print(len(args))
+        print(len(cls.params))
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if type(args[0]) is not str: 
+            return "Invalid element name."
+        if not os.path.isfile(args[1]): 
+            return "Invalid image path."
+        elif not args[1].endswith(".bmp"):
+            return "Image type must be .bmp (use Image class for pixel types)."
+        for e in args[2:3]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position arguments must be int values"
+        # Return None if all arguments are valid
+        return None
+
+    def __init__(self, _name: str, imgPath: str = "", x: str = "0", y: str = "0"):
         """
         Parameters
         ----------
@@ -71,13 +123,13 @@ class IconElement(MatrixElement):
 
         super().__init__(_name)
         self.path = imgPath
-        self.pos = _pos
+        self.x = int(x)
+        self.y = int(y)
 
     def draw(self, canvas: FrameCanvas):
         img = Image.open(self.path)
         img = img.convert("RGB")
-        canvas.SetImage(img, self.pos[0], self.pos[1])
+        canvas.SetImage(img, self.x, self.y)
 
     def json(self):
         return self.__dict__
-# 

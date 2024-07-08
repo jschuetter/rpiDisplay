@@ -1,10 +1,14 @@
 #!/bin/python
+# Import config module
+import sys
+sys.path.insert(0, "../..")
+
+import config
+from config import FONTS_PATH
+
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 import datetime as dt
 import time
-
-import config 
-from config import FONTS_PATH
 
 DATE_X = 2
 DATE_Y = 8
