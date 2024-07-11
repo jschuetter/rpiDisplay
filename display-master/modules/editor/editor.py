@@ -15,6 +15,7 @@ from modules.src import Elements
 import os, json
 from re import escape
 import logging
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -89,11 +90,28 @@ class ModuleEditor(cmd.Cmd):
         '''
 
         global working
-        path = os.path.join(SRC_PATH, "tempName.json")
-        with open(path, "wr") as file:
+        args = parse(line)
+        if not os.path.isfile(args[0]) or not args[0].endswith(".json"):
+            print("First argument must be valid JSON file")
+            return
+        else: 
+            path = args[0]
+        
+        # path = os.path.join(SRC_PATH, "tempName.json")
+        print(path)
+        with open(path) as file:
             working["path"] = path
-            working["json"] = json.load(file.read())
-            working["elements"] = json_get_elements(working["json"])
+            working["json"] = json.load(file)
+            #Populate element list -- iterate over classes, then objects
+            working["elements"] = []
+            for k, v in working["json"].items():
+                for props in v.values():
+                    newEl = ELEMENT_TYPES[k].from_dict(props)
+                    newEl.draw(canvas)
+                    print(newEl.__dict__)
+                    working["elements"].append(newEl)
+            matrix.SwapOnVSync(canvas)
+            # working["elements"] = []
 
     def do_close(self, line):
         'Close current working composition'
@@ -161,9 +179,6 @@ class ModuleEditor(cmd.Cmd):
             print("No open composition")
             return
         
-        # for el in working["elements"]:
-        #     print(el.name)
-        #     print("\t\t")
         print(*[el.name for el in working["elements"]], sep="\t\t")
         return
 
@@ -196,9 +211,6 @@ def write_json():
     global working
     with open(working["path"], "w") as file:
         json.dump(working["json"], file, cls=Elements.CEnc)
-
-def json_get_elements(src: dict):
-    pass
 
 if __name__ == "__main__":
    ModuleEditor().cmdloop() 

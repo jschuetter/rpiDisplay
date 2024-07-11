@@ -39,6 +39,17 @@ class Property:
     '''
 
     allowedModes = ["l", "s", "n", "n2"]
+    
+    @classmethod
+    def from_dict(cls, src: dict):
+        clsObj = cls("default")
+        for k, v in src.items():
+            if type(v) is dict:
+                setattr(clsObj, k, Property.from_dict(v))
+            else: 
+                setattr(clsObj, k, v)
+        return clsObj
+    
     def __init__(self, _value: Any, _mode: str = "l", _opt: list = []):
         '''
         Parameters
@@ -114,6 +125,16 @@ class IconElement(MatrixElement):
                 return "Position arguments must be int values"
         # Return None if all arguments are valid
         return None
+    
+    @classmethod
+    def from_dict(cls, src: dict):
+        clsObj = cls("default")
+        for k, v in src.items():
+            if type(v) is dict:
+                setattr(clsObj, k, Property.from_dict(v))
+            else: 
+                setattr(clsObj, k, v)
+        return clsObj
 
     def __init__(self, _name: str, imgPath: str = "", x: str = "0", y: str = "0"):
         '''
