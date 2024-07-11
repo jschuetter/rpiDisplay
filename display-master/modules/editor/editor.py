@@ -153,7 +153,9 @@ class ModuleEditor(cmd.Cmd):
             print(invalidArgs)
             print(ELEMENT_TYPES[elType].docstr)
             return
-        
+        if elArgs[0] in [el.name for el in working["elements"]]:
+            print("Name must be unique (all other args valid).")
+            return
         newEl = ELEMENT_TYPES[elType](*elArgs)
 
         working["elements"].append(newEl)
