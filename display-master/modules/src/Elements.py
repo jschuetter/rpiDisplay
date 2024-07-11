@@ -18,10 +18,13 @@ def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict
 def print_params(params):
     paramDocs = ""
     for p in params:
-        print(p)
         paramDocs += f"{p.get('name')}: {p.get('type')}\n\t{p.get('description')}\n\t" + \
             f"Optional: {p.get('optional')}\n"
     return paramDocs
+
+class CEnc(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
 
 class Property:
     '''Custom class for MatrixElement properties
@@ -56,6 +59,9 @@ class Property:
         if self.mode == "s" and _opt == []:
             raise ValueError("Options list is required for scrollable mode.")
         self.options = _opt
+
+    def __repr__(self):
+        return f"Property({self.value}, {self.mode}, {self.options})"
 
 class MatrixElement: 
     params = [add_param("name", str, "Name of Element object (dev only).")]
@@ -123,13 +129,15 @@ class IconElement(MatrixElement):
 
         super().__init__(_name)
         self.path = imgPath
-        self.x = int(x)
-        self.y = int(y)
+        self.pos = Property((int(x),int(y)), "n2")
+        # self.x = int(x)
+        # self.y = int(y)
 
     def draw(self, canvas: FrameCanvas):
         img = Image.open(self.path)
         img = img.convert("RGB")
-        canvas.SetImage(img, self.x, self.y)
+        print(self.pos.value)
+        canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
 
     def json(self):
         return self.__dict__

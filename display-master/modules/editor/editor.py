@@ -15,8 +15,6 @@ from modules.src import Elements
 import os, json
 from re import escape
 import logging
-from ast import literal_eval
-import argparse
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +63,19 @@ class ModuleEditor(cmd.Cmd):
         working = {}
         working["name"] = compName
         working["path"] = os.path.join(parentDir,compName + ".json")
+        if os.path.exists(working["path"]): 
+            while True:
+                confirm = input("This path already exists! Do you want to over[w]rite, \
+                                [o]pen, or [c]ancel? (w/o/c)")
+                confirm = confirm.partition(" ")[0].lower()
+                if confirm == "w": break
+                elif confirm == "o": self.do_open(compName)
+                elif confirm == "c": 
+                    working = {}
+                    print("Canceled creating composition.")
+                    return
+                else: 
+                    print("Invalid response.")
         working["elements"] = []
         working["json"] = {} 
 
@@ -84,7 +95,7 @@ class ModuleEditor(cmd.Cmd):
             working["json"] = json.load(file.read())
             working["elements"] = json_get_elements(working["json"])
 
-    def do_close(self):
+    def do_close(self, line):
         'Close current working composition'
         global working, workingName, workingPath
         write_json()
@@ -135,7 +146,26 @@ class ModuleEditor(cmd.Cmd):
         if working["json"].get(elType) is None:
             working["json"][elType] = {}
         working["json"][elType][newEl.name] = newEl.__dict__
-        # write_json()
+        write_json()
+
+    def do_ls(self, line):
+        '''Print list of elements in current directory
+        
+        Usage: ls [dir - WIP]
+        
+        dir: str
+            Name of directory to print'''
+        
+        global working
+        if not working: 
+            print("No open composition")
+            return
+        
+        # for el in working["elements"]:
+        #     print(el.name)
+        #     print("\t\t")
+        print(*[el.name for el in working["elements"]], sep="\t\t")
+        return
 
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
@@ -165,7 +195,7 @@ def write_json():
     'Write changes to JSON file'
     global working
     with open(working["path"], "w") as file:
-        json.dump(working["json"], file)
+        json.dump(working["json"], file, cls=Elements.CEnc)
 
 def json_get_elements(src: dict):
     pass
