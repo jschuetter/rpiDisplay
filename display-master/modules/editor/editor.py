@@ -105,7 +105,7 @@ class ModuleEditor(cmd.Cmd):
             #Populate element list -- iterate over classes, then objects
             working["elements"] = []
             for k, v in working["json"].items():
-                for props in v.values():
+                for props in v:
                     newEl = ELEMENT_TYPES[k].from_dict(props)
                     newEl.draw(canvas)
                     print(newEl.__dict__)
@@ -115,7 +115,10 @@ class ModuleEditor(cmd.Cmd):
 
     def do_close(self, line):
         'Close current working composition'
-        global working, workingName, workingPath
+        global working
+        if not working:
+            # Directly return if no composition is open
+            return
         write_json()
         working = {}
 
@@ -164,8 +167,9 @@ class ModuleEditor(cmd.Cmd):
 
         # Create sub-dict for element class if not existing
         if working["json"].get(elType) is None:
-            working["json"][elType] = {}
-        working["json"][elType][newEl.name] = newEl.__dict__
+            working["json"][elType] = []
+        working["json"][elType].append(newEl.__dict__)
+        print(working["json"])
         write_json()
 
     def do_ls(self, line):
@@ -187,7 +191,7 @@ class ModuleEditor(cmd.Cmd):
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
         print("Closing ModuleEditor...")
-        self.do_close()
+        self.do_close(None)
         canvas.Clear()
         matrix.SwapOnVSync(canvas)
         return True

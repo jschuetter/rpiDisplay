@@ -39,10 +39,16 @@ class Property:
     '''
 
     allowedModes = ["l", "s", "n", "n2"]
+    typeMap = {
+        "str":str,
+        "int":int,
+        "tup":tuple, 
+        "None":None
+    }
     
     @classmethod
     def from_dict(cls, src: dict):
-        clsObj = cls("default")
+        clsObj = cls("default", "None")
         for k, v in src.items():
             if type(v) is dict:
                 setattr(clsObj, k, Property.from_dict(v))
@@ -50,34 +56,40 @@ class Property:
                 setattr(clsObj, k, v)
         return clsObj
     
-    def __init__(self, _value: Any, _mode: str = "l", _opt: list = []):
+    def __init__(self, val: Any, typ: str, mod: str = "l", opt: list = []):
         '''
         Parameters
         ----------
-        _value: Any
+        val: Any
             Value of parameter
-        _mode: str
+        typ: type
+            Type of parameter
+        mod: str
             parameter mode (see class docstring)
         _opt: list[str]
             list of available value options
             Required for "scrollable" mode
         '''
 
-        self.value = _value
-        if _mode not in self.allowedModes: 
+        self.value = val
+        if typ not in Property.typeMap:
+            raise ValueError("Invalid type string")
+        self.type_ = typ
+        if mod not in self.allowedModes: 
             raise ValueError("Invalid mode string")
-        self.mode = _mode
-        if self.mode == "s" and _opt == []:
+        self.mode = mod
+        if self.mode == "s" and opt == []:
             raise ValueError("Options list is required for scrollable mode.")
-        self.options = _opt
+        self.options = opt
 
     def __repr__(self):
-        return f"Property({self.value}, {self.mode}, {self.options})"
+        return (f"{{'value':{self.value},'type_':{self.type_},'mode':{self.mode},"
+                f"'options':{self.options}}}")
 
 class MatrixElement: 
     params = [add_param("name", str, "Name of Element object (dev only).")]
 
-    def __init__(self, _name: str):
+    def __init__(self, name_: str):
         '''
         Parameters
         ----------
@@ -85,9 +97,9 @@ class MatrixElement:
             Element name - must be unique among sibling Elements
         '''
 
-        self.name = _name
+        self.name = Property(name_, "str")
         self.group = []
-        self.pos = Property((0,0), "n2")
+        self.pos = Property((0,0), "tup", "n2")
     
     def duplicate(self):
         return deepcopy(self)
@@ -149,13 +161,13 @@ class IconElement(MatrixElement):
         '''
 
         super().__init__(_name)
-        self.path = imgPath
-        self.pos = Property((int(x),int(y)), "n2")
+        self.path = Property(imgPath, "str")
+        self.pos = Property((int(x),int(y)), "tup", "n2")
         # self.x = int(x)
         # self.y = int(y)
 
     def draw(self, canvas: FrameCanvas):
-        img = Image.open(self.path)
+        img = Image.open(self.path.value)
         img = img.convert("RGB")
         print(self.pos.value)
         canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
