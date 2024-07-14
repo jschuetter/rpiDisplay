@@ -108,7 +108,7 @@ class ModuleEditor(cmd.Cmd):
                 for props in v:
                     newEl = ELEMENT_TYPES[k].from_dict(props)
                     newEl.draw(canvas)
-                    print(newEl.__dict__)
+                    # print(newEl.__dict__)
                     working["elements"].append(newEl)
             matrix.SwapOnVSync(canvas)
             # working["elements"] = []
@@ -178,14 +178,27 @@ class ModuleEditor(cmd.Cmd):
         Usage: ls [dir - WIP]
         
         dir: str
-            Name of directory to print'''
+            Name of directory to print
+            Prints objects in directory or, if dir is name of object
+            in current working directory, prints object properties'''
         
         global working
         if not working: 
             print("No open composition")
             return
-        
-        print(*[el.name for el in working["elements"]], sep="\t\t")
+
+        args = parse(line)
+
+        if not args: 
+            print(*[el.name.value for el in working["elements"]], sep="\t\t")
+            return
+        else: 
+            for el in working["elements"]:
+                if el.name.value == args[0]:
+                    print_props(el)
+                    return
+        print("Object not found.\n")
+        print(self.do_ls.__doc__)
         return
 
     def do_exit(self, line):
@@ -217,6 +230,18 @@ def write_json():
     global working
     with open(working["path"], "w") as file:
         json.dump(working["json"], file, cls=Elements.CEnc)
+
+def print_props(obj: Any):
+    '''Print all object properties and their values in formatted output
+    
+    obj: Any
+        Object to print'''
+    
+    for k, v in obj.__dict__.items():
+        if isinstance(v, Elements.Property):
+            print(f"{k}: {v.value}")
+        else: 
+            print(f"{k}: {v}")
 
 if __name__ == "__main__":
    ModuleEditor().cmdloop() 

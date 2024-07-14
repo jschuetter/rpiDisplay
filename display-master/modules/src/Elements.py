@@ -169,7 +169,7 @@ class IconElement(MatrixElement):
     def draw(self, canvas: FrameCanvas):
         img = Image.open(self.path.value)
         img = img.convert("RGB")
-        print(self.pos.value)
+        # print(self.pos.value)
         canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
 
     def json(self):
