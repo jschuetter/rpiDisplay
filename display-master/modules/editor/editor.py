@@ -16,6 +16,7 @@ import os, json
 from re import escape
 import logging
 from typing import Any
+from warnings import warn
 
 log = logging.getLogger(__name__)
 
@@ -63,23 +64,28 @@ class ModuleEditor(cmd.Cmd):
             os.mkdir(parentDir)
 
         working = {}
-        working["name"] = compName
-        working["path"] = os.path.join(parentDir,compName + ".json")
-        if os.path.exists(working["path"]): 
+        path_ = os.path.join(parentDir,compName + ".json")
+        if os.path.exists(path_): 
             while True:
                 confirm = input("This path already exists! Do you want to over[w]rite, \
                                 [o]pen, or [c]ancel? (w/o/c)")
                 confirm = confirm.partition(" ")[0].lower()
-                if confirm == "w": break
-                elif confirm == "o": self.do_open(compName)
-                elif confirm == "c": 
+                if confirm in ["w", "overwrite", "write"]: 
+                    break
+                elif confirm in ["o", "open"]: 
+                    self.do_open(compName)
+                    break
+                elif confirm in ["c", "cancel"]: 
                     working = {}
                     print("Canceled creating composition.")
                     return
                 else: 
                     print("Invalid response.")
+        # Set comp properties
+        working["name"] = compName
+        working["path"] = path_
         working["elements"] = []
-        working["json"] = {} 
+        # working["json"] = {} 
 
     def do_open(self, line):
         '''Open matrix composition JSON file
@@ -91,12 +97,35 @@ class ModuleEditor(cmd.Cmd):
         '''
 
         global working, canvas, matrix
+
         args = parse(line)
-        if not os.path.isfile(args[0]) or not args[0].endswith(".json"):
-            print("First argument must be valid JSON file")
+
+        if not args: 
+            # Print docs if no arguments given
+            print(self.do_open.__doc__)
             return
-        else: 
-            path = args[0]
+
+        if working: 
+            while True:
+                confirm = input("There is already an open composition. "
+                    "Do you want to close it and open a new one? (y/n)")
+                confirm = confirm.partition(" ")[0].lower()
+                if confirm in ["n", "no"]:
+                    # Cancel, do nothing
+                    print("Canceling...")
+                    return
+                elif confirm in ["y", "yes"]:
+                    # Close open comp and continue with open
+                    self.do_close("")
+                    break
+                # Else, get repeat confirmation request
+
+        path = os.path.join(SRC_PATH, args[0] + ".json")
+        print(path)
+        if not os.path.isfile(path):
+            print("First argument must be valid composition name")
+            print("Use `ls` to see existing comps or `new` to create a comp")
+            return
         
         # path = os.path.join(SRC_PATH, "tempName.json")
         print(path)
@@ -106,7 +135,6 @@ class ModuleEditor(cmd.Cmd):
             #Populate element list -- iterate over classes, then objects
             working["elements"] = []
             for k, v in jsonFile.items():
-                print(f"{k}, {v}")
                 for props in v:
                     newEl = ELEMENT_TYPES[k].from_dict(props)
                     newEl.draw(canvas)
@@ -188,14 +216,15 @@ class ModuleEditor(cmd.Cmd):
             in current working directory, prints object properties'''
         
         global working
-        if not working: 
-            print("No open composition")
-            return
 
         args = parse(line)
 
         if not args: 
-            print(*[el.name.value for el in working["elements"]], sep="\t\t")
+            if not working: 
+                # If no open comp, print composition files
+                print(*[os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)], sep="\t\t")
+            else: 
+                print(*[el.name.value for el in working["elements"]], sep="\t\t")
             return
         else: 
             for el in working["elements"]:
@@ -298,6 +327,9 @@ def write_json():
     'Write changes to JSON file'
     global working
     # Generate JSON from element list
+    if not working: 
+        warn("No open composition, no JSON written", RuntimeWarning)
+        return
     workingJson = {}
     for el in working["elements"]:
         elType = ELEMENT_CLASS_NAMES[type(el)]
