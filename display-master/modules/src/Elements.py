@@ -82,6 +82,12 @@ class Property:
             raise ValueError("Options list is required for scrollable mode.")
         self.options = opt
 
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+    
+    def __getitem__(self, key):
+        return getattr(self, key)
+
     def __repr__(self):
         return (f"{{'value':{self.value},'type_':{self.type_},'mode':{self.mode},"
                 f"'options':{self.options}}}")

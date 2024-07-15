@@ -33,6 +33,7 @@ ELEMENT_TYPES = {"icon": Elements.IconElement,
         "rect":None, 
         "ellipse":None
         }
+ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
 
 class ModuleEditor(cmd.Cmd):
     intro = "Welcome to Jaybird's rgbmatrix Module Editor. Type help or ? to list commands.\n"
@@ -89,7 +90,7 @@ class ModuleEditor(cmd.Cmd):
             Path of JSON file to open
         '''
 
-        global working
+        global working, canvas, matrix
         args = parse(line)
         if not os.path.isfile(args[0]) or not args[0].endswith(".json"):
             print("First argument must be valid JSON file")
@@ -101,10 +102,11 @@ class ModuleEditor(cmd.Cmd):
         print(path)
         with open(path) as file:
             working["path"] = path
-            working["json"] = json.load(file)
+            jsonFile = json.load(file)
             #Populate element list -- iterate over classes, then objects
             working["elements"] = []
-            for k, v in working["json"].items():
+            for k, v in jsonFile.items():
+                print(f"{k}, {v}")
                 for props in v:
                     newEl = ELEMENT_TYPES[k].from_dict(props)
                     newEl.draw(canvas)
@@ -115,12 +117,15 @@ class ModuleEditor(cmd.Cmd):
 
     def do_close(self, line):
         'Close current working composition'
-        global working
+        global working, canvas, matrix
         if not working:
             # Directly return if no composition is open
             return
         write_json()
         working = {}
+        # Reset canvas
+        canvas = matrix.CreateFrameCanvas()
+        matrix.SwapOnVSync(canvas)
 
     def do_add(self, line):
         '''Add new element to current composition
@@ -135,7 +140,7 @@ class ModuleEditor(cmd.Cmd):
             See Element classes for details
         '''
 
-        global working
+        global working, matrix
         # Check for open composition
         if not working: 
             print("Must have open composition! \nUse `new` to create a comp or `open` to import one from JSON.")
@@ -166,10 +171,10 @@ class ModuleEditor(cmd.Cmd):
         matrix.SwapOnVSync(canvas)
 
         # Create sub-dict for element class if not existing
-        if working["json"].get(elType) is None:
-            working["json"][elType] = []
-        working["json"][elType].append(newEl.__dict__)
-        print(working["json"])
+        # if working["json"].get(elType) is None:
+        #     working["json"][elType] = []
+        # working["json"][elType].append(vars(newEl))
+        # print(working["json"])
         write_json()
 
     def do_ls(self, line):
@@ -200,9 +205,73 @@ class ModuleEditor(cmd.Cmd):
         print("Object not found.\n")
         print(self.do_ls.__doc__)
         return
+    
+    def do_set(self, line):
+        '''Set property value for specified object and prop
+        
+        Usage: set [obj] [propName] [value]
+        
+        obj: str
+            Name of object to modify
+        propName: str
+            Name of property to modify
+        value: Any
+            New property value'''
+
+        global working
+        if not working: 
+            print("Must have open composition!")
+            return
+
+        args = parse(line)
+        # Input validation
+        if type(args[0]) is not str:
+            print("Object name must be string!")
+            return
+        if type(args[1]) is not str:
+            print("Property name must be string!")
+            return
+        
+        # Find objects
+        obj = None
+        for el in working["elements"]:
+            if el.name.value == args[0]:
+                obj = el
+                break
+        if obj is None: 
+            print("Object not found")
+            return
+        # Find property
+        # prop = None
+        for p, v in vars(el).items():
+            print(p)
+            print(v)
+            if p == args[1]:
+                # Check provided type of provided value
+                # print(vars(el)[p].get("type_"))
+                propType = Elements.Property.typeMap[v.type_]
+                if not isinstance(args[2], propType):
+                    print(f"Wrong type - type of {p} must be {propType}")
+                    return
+                else: 
+                    vars(el)[p]["value"] = args[2]
+                    print(f"Set {el.name.value}.{p} to {args[2]}")
+                    # Update JSON
+                    # working["json"][el.type.value]
+                    # for e in working["json"][el.type.value]:
+
+                    write_json()
+                    refresh_canvas()
+                    return
+                
+        # If prop not found
+        print("Property not found")
+        print("Use `ls` to view object properties")
+        return
 
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
+        global canvas, matrix
         print("Closing ModuleEditor...")
         self.do_close(None)
         canvas.Clear()
@@ -228,8 +297,16 @@ def new_json():
 def write_json():
     'Write changes to JSON file'
     global working
+    # Generate JSON from element list
+    workingJson = {}
+    for el in working["elements"]:
+        elType = ELEMENT_CLASS_NAMES[type(el)]
+        if workingJson.get(elType) is None:
+            workingJson[elType] = []
+        workingJson[elType].append(vars(el))
+
     with open(working["path"], "w") as file:
-        json.dump(working["json"], file, cls=Elements.CEnc)
+        json.dump(workingJson, file, cls=Elements.CEnc)
 
 def print_props(obj: Any):
     '''Print all object properties and their values in formatted output
@@ -237,11 +314,21 @@ def print_props(obj: Any):
     obj: Any
         Object to print'''
     
-    for k, v in obj.__dict__.items():
+    for k, v in vars(obj).items():
         if isinstance(v, Elements.Property):
             print(f"{k}: {v.value}")
         else: 
             print(f"{k}: {v}")
+
+def refresh_canvas():
+    global working, canvas, matrix
+    if not working:
+        raise RuntimeError("Cannot draw without open composition")
+
+    for el in working["elements"]:
+        el.draw(canvas)
+    matrix.SwapOnVSync(canvas)
+    return
 
 if __name__ == "__main__":
    ModuleEditor().cmdloop() 
