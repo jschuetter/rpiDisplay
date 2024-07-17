@@ -39,16 +39,20 @@ class Property:
     '''
 
     allowedModes = ["l", "s", "n", "n2"]
-    typeMap = {
+    typemap_str = {
         "str":str,
         "int":int,
-        "tup":tuple, 
         "None":None
+    }
+    typemap_cls = {
+        str:"str",
+        int:"int",
+        None:"None"
     }
     
     @classmethod
     def from_dict(cls, src: dict):
-        clsObj = cls("default", "None")
+        clsObj = cls("default", None)
         for k, v in src.items():
             if type(v) is dict:
                 setattr(clsObj, k, Property.from_dict(v))
@@ -72,9 +76,16 @@ class Property:
         '''
 
         self.value = val
-        if typ not in Property.typeMap:
-            raise ValueError("Invalid type string")
-        self.type_ = typ
+        # if typ not in Property.typemap_cls:
+        #     raise ValueError("Type not in class typemap")
+        # Convert type to tuple (for easier checking)
+        if type(typ) in [tuple, list]:
+            typeTup = tuple([Property.typemap_cls[t] for t in typ])
+        else:
+            typeTup = (Property.typemap_cls[typ],)
+        # print(self.value)
+        # print(typeTup)
+        self.type_ = typeTup
         if mod not in self.allowedModes: 
             raise ValueError("Invalid mode string")
         self.mode = mod
@@ -103,9 +114,9 @@ class MatrixElement:
             Element name - must be unique among sibling Elements
         '''
 
-        self.name = Property(name_, "str")
+        self.name = Property(name_, str)
         self.group = []
-        self.pos = Property((0,0), "tup", "n2")
+        self.pos = Property((0,0), (int, int), "n2")
     
     def duplicate(self):
         return deepcopy(self)
@@ -167,8 +178,8 @@ class IconElement(MatrixElement):
         '''
 
         super().__init__(_name)
-        self.path = Property(imgPath, "str")
-        self.pos = Property((int(x),int(y)), "tup", "n2")
+        self.path = Property(imgPath, str)
+        self.pos = Property((int(x),int(y)), (int, int), "n2")
         # self.x = int(x)
         # self.y = int(y)
 

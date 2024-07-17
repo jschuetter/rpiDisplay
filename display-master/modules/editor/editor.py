@@ -273,25 +273,44 @@ class ModuleEditor(cmd.Cmd):
         # Find property
         # prop = None
         for p, v in vars(el).items():
-            print(p)
-            print(v)
             if p == args[1]:
                 # Check provided type of provided value
                 # print(vars(el)[p].get("type_"))
-                propType = Elements.Property.typeMap[v.type_]
-                if not isinstance(args[2], propType):
-                    print(f"Wrong type - type of {p} must be {propType}")
-                    return
-                else: 
-                    vars(el)[p]["value"] = args[2]
-                    print(f"Set {el.name.value}.{p} to {args[2]}")
-                    # Update JSON
-                    # working["json"][el.type.value]
-                    # for e in working["json"][el.type.value]:
+                # propType = Elements.Property.typeMap[v.type_]
+                # Convert types to tuple to handle sequence types
+                # 
+                # try:
+                #     types = tuple([Elements.Property.typemap_str[t] for t in v.type_])
+                # except TypeError:
+                #     # Handle 1-arg properties
+                #     types = (Elements.Property.typemap_str[v.type_],)
+                # print(v.type_)
+                # types = (v.type_,)
+                argList = []
+                for i in range(len(v.type_)):
+                    t = Elements.Property.typemap_str[v.type_[i]]
+                    try:
+                        arg = t(args[2+i])
+                        # Add'l typecheck
+                        if not isinstance(arg, t):
+                            raise ValueError
+                    except ValueError:
+                        print(f"Wrong type (param {i}) - type of {p} must be {t}")
+                        return
+                    # Add arg to list
+                    argList.append(arg)
 
-                    write_json()
-                    refresh_canvas()
-                    return
+                # Set property value
+                if len(argList) > 1:
+                    val = tuple(argList)
+                else:
+                    val = argList[0]
+                vars(el)[p]["value"] = val
+                print(f"Set {el.name.value}.{p} to {val}")
+                # Update JSON, canvas
+                write_json()
+                refresh_canvas()
+                return
                 
         # If prop not found
         print("Property not found")
@@ -357,6 +376,7 @@ def refresh_canvas():
     if not working:
         raise RuntimeError("Cannot draw without open composition")
 
+    canvas = matrix.CreateFrameCanvas()
     for el in working["elements"]:
         el.draw(canvas)
     matrix.SwapOnVSync(canvas)
