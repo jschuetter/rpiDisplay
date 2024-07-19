@@ -10,6 +10,7 @@ from config import FONTS_PATH
 
 # CLI dependencies
 import cmd
+import readline
 from modules.src import Elements
 # from modules.src.Elements import IconElement
 import os, json
@@ -44,12 +45,10 @@ class ModuleEditor(cmd.Cmd):
     def do_new(self, line):
         '''Create new matrix composition
 
-        Usage: new [compName] [parentDir - WIP]
+        Usage: new [compName]
 
         compName: str
             Name of composition (for JSON storage)
-        parentDir: str -- NOT IN USE
-            Path of parent directory for JSON storage file
         '''
 
         global working
@@ -90,10 +89,10 @@ class ModuleEditor(cmd.Cmd):
     def do_open(self, line):
         '''Open matrix composition JSON file
 
-        Usage: open [path]
+        Usage: open [comp]
 
-        path: str
-            Path of JSON file to open
+        comp: str
+            Name of JSON file to open
         '''
 
         global working, canvas, matrix
@@ -137,11 +136,9 @@ class ModuleEditor(cmd.Cmd):
             for k, v in jsonFile.items():
                 for props in v:
                     newEl = ELEMENT_TYPES[k].from_dict(props)
-                    newEl.draw(canvas)
                     # print(newEl.__dict__)
                     working["elements"].append(newEl)
-            matrix.SwapOnVSync(canvas)
-            # working["elements"] = []
+            refresh_canvas()            
 
     def do_close(self, line):
         'Close current working composition'
