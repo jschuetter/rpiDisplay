@@ -195,14 +195,7 @@ class ModuleEditor(cmd.Cmd):
         newEl = ELEMENT_TYPES[elType](*elArgs)
 
         working["elements"].append(newEl)
-        newEl.draw(canvas)
-        matrix.SwapOnVSync(canvas)
-
-        # Create sub-dict for element class if not existing
-        # if working["json"].get(elType) is None:
-        #     working["json"][elType] = []
-        # working["json"][elType].append(vars(newEl))
-        # print(working["json"])
+        refresh_canvas()
         write_json()
 
     def do_ls(self, line):
