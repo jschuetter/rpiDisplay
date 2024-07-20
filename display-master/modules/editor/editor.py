@@ -290,18 +290,7 @@ class ModuleEditor(cmd.Cmd):
         # prop = None
         for p, v in vars(el).items():
             if p == args[1]:
-                # Check provided type of provided value
-                # print(vars(el)[p].get("type_"))
-                # propType = Elements.Property.typeMap[v.type_]
-                # Convert types to tuple to handle sequence types
-                # 
-                # try:
-                #     types = tuple([Elements.Property.typemap_str[t] for t in v.type_])
-                # except TypeError:
-                #     # Handle 1-arg properties
-                #     types = (Elements.Property.typemap_str[v.type_],)
-                # print(v.type_)
-                # types = (v.type_,)
+                # Check types of provided values
                 argList = []
                 for i in range(len(v.type_)):
                     t = Elements.Property.typemap_str[v.type_[i]]
@@ -311,7 +300,12 @@ class ModuleEditor(cmd.Cmd):
                         if not isinstance(arg, t):
                             raise ValueError
                     except ValueError:
-                        print(f"Wrong type (param {i}) - type of {p} must be {t}")
+                        print(f"Wrong type (param {i}) - type of {p} must be "
+                        f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
+                        return
+                    except IndexError: 
+                        print(f"Not enough arguments: param {p} requires "
+                        f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
                         return
                     # Add arg to list
                     argList.append(arg)
