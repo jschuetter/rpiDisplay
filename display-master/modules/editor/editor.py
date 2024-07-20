@@ -18,6 +18,7 @@ from re import escape
 import logging
 from typing import Any
 from warnings import warn
+import re
 
 log = logging.getLogger(__name__)
 
@@ -53,14 +54,15 @@ class ModuleEditor(cmd.Cmd):
 
         global working
 
-        # (name, parentDir) = (parse(line), SRC_PATH)
-        # Temporary override
-        # Need to figure out how to allow passing (parsing) optional parameters in CLI
-        (compName,) = parse(line)
         parentDir = SRC_PATH
-        # 
         if not os.path.isdir(parentDir): 
             os.mkdir(parentDir)
+
+        (compName,) = parse(line)
+        if not re.match("^[A-Za-z0-9_]*$", compName):
+            print("Invalid name.")
+            print("Comp names must only contain alphanumeric characters and underscores.")
+            return
 
         working = {}
         path_ = os.path.join(parentDir,compName + ".json")
@@ -84,7 +86,6 @@ class ModuleEditor(cmd.Cmd):
         working["name"] = compName
         working["path"] = path_
         working["elements"] = []
-        # working["json"] = {} 
 
     def do_open(self, line):
         '''Open matrix composition JSON file
@@ -138,7 +139,16 @@ class ModuleEditor(cmd.Cmd):
                     newEl = ELEMENT_TYPES[k].from_dict(props)
                     # print(newEl.__dict__)
                     working["elements"].append(newEl)
-            refresh_canvas()            
+            refresh_canvas()
+
+    def complete_open(self, text, line, begidx, endidx):
+        # print(f"args: {text}, {line}, {begidx}, {endidx}")
+        # Ignore after 1st argument
+        if len(line.split()) + line.endswith(" ") > 2: 
+            return []
+        
+        valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
+        return [v for v in valid if v.startswith(text)]
 
     def do_close(self, line):
         'Close current working composition'
@@ -195,6 +205,14 @@ class ModuleEditor(cmd.Cmd):
         refresh_canvas()
         write_json()
 
+    def complete_add(self, text, line, begidx, endidx):
+        # Ignore completion after first argument
+        if len(line.split()) + line.endswith(" ") > 2: 
+            return []
+
+        valid = list(ELEMENT_TYPES.keys())
+        return [s for s in valid if s.startswith(text)]
+
     def do_ls(self, line):
         '''Print list of elements in current directory
         
@@ -224,6 +242,14 @@ class ModuleEditor(cmd.Cmd):
         print("Object not found.\n")
         print(self.do_ls.__doc__)
         return
+
+    def complete_ls(self, text, line, begidx, endidx):
+        # Ignore after 1st argument
+        if not working or (len(line.split()) + line.endswith(" ") > 2):
+            return []
+
+        valid = [el.name.value for el in working["elements"]]
+        return [s for s in valid if s.startswith(text)]
     
     def do_set(self, line):
         '''Set property value for specified object and prop
@@ -306,6 +332,20 @@ class ModuleEditor(cmd.Cmd):
         print("Property not found")
         print("Use `ls` to view object properties")
         return
+    
+    def complete_set(self, text, line, begidx, endidx):
+        numArgs = len(line.split()) + line.endswith(" ")
+
+        valid = []
+        if numArgs == 2:
+            valid = [el.name.value for el in working["elements"]]
+        elif numArgs == 3:
+            # Names of properties for selected element
+            for el in working["elements"]:
+                if el.name.value == line.split()[1]:
+                    valid = list(vars(el).keys())
+                    break
+        return [s for s in valid if s.startswith(text)]
 
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
