@@ -11,38 +11,21 @@ from config import FONTS_PATH
 # CLI dependencies
 import cmd
 from modules.src import Elements
-# from modules.src.Elements import IconElement
-import os, json
-from re import escape
+from ElementEditor import ElementEditor
+import cli # Relevant global vars & methods
+from cli import working, parse, \
+    refresh_canvas, write_json, print_props
+
+import os, re, json
 import logging
 from typing import Any
 from warnings import warn
-import re
 from shutil import copy as fcopy
 from copy import deepcopy
-
-log = logging.getLogger(__name__)
-
-# Standard path to store JSON files at
-SRC_PATH = "./srcFiles"
-# Global variable containing current working data (read in from JSON or created from CLI)
-# Contains comp name, comp json path, list of Element objects, dict of Element names & data
-working = {}
-matrix = config.matrix_from_env()
-canvas = matrix.CreateFrameCanvas()
-
-ELEMENT_TYPES = {"icon": Elements.IconElement, 
-        "image":None, 
-        "text":None, 
-        "rect":None, 
-        "ellipse":None
-        }
-ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
 
 class ModuleEditor(cmd.Cmd):
     intro = "Welcome to Jaybird's rgbmatrix Module Editor. Type help or ? to list commands.\n"
     prompt = "(ModuleEditor): "
-    file = None
 
     def do_new(self, line):
         '''Create new matrix composition
@@ -55,7 +38,7 @@ class ModuleEditor(cmd.Cmd):
 
         global working
 
-        parentDir = SRC_PATH
+        parentDir = cli.SRC_PATH
         if not os.path.isdir(parentDir): 
             os.mkdir(parentDir)
 
@@ -97,7 +80,7 @@ class ModuleEditor(cmd.Cmd):
             Name of JSON file to open
         '''
 
-        global working, canvas, matrix
+        global working
 
         args = parse(line)
 
@@ -121,7 +104,7 @@ class ModuleEditor(cmd.Cmd):
                     break
                 # Else, get repeat confirmation request
 
-        path = os.path.join(SRC_PATH, args[0] + ".json")
+        path = os.path.join(cli.SRC_PATH, args[0] + ".json")
         print(path)
         if not os.path.isfile(path):
             print("First argument must be valid composition name")
@@ -137,7 +120,7 @@ class ModuleEditor(cmd.Cmd):
             working["elements"] = []
             for k, v in jsonFile.items():
                 for props in v:
-                    newEl = ELEMENT_TYPES[k].from_dict(props)
+                    newEl = cli.ELEMENT_TYPES[k].from_dict(props)
                     # print(newEl.__dict__)
                     working["elements"].append(newEl)
             refresh_canvas()
@@ -148,7 +131,7 @@ class ModuleEditor(cmd.Cmd):
         if len(line.split()) + line.endswith(" ") > 2: 
             return []
         
-        valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
+        valid = [os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)]
         return [v for v in valid if v.startswith(text)]
 
     def do_add(self, line):
@@ -164,31 +147,31 @@ class ModuleEditor(cmd.Cmd):
             See Element classes for details
         '''
 
-        global working, matrix
+        global working
         # Check for open composition
         if not working: 
             print("Must have open composition! \nUse `new` to create a comp or `open` to import one from JSON.")
             return
         
-        log.debug(line)
+        cli.log.debug(line)
         args = parse(line)
         # Input validation
-        if len(args) < 1 or args[0] not in ELEMENT_TYPES.keys():
+        if len(args) < 1 or args[0] not in cli.ELEMENT_TYPES.keys():
             # Validate element type
-            print("Select an element type to add:\n" + str(list(ELEMENT_TYPES.keys())))
+            print("Select an element type to add:\n" + str(list(cli.ELEMENT_TYPES.keys())))
             return
 
         elType = args[0]
         elArgs = args[1:]
-        invalidArgs = ELEMENT_TYPES[elType].testArgs(*elArgs)
+        invalidArgs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
         if invalidArgs:
             print(invalidArgs)
-            print(ELEMENT_TYPES[elType].docstr)
+            print(cli.ELEMENT_TYPES[elType].docstr)
             return
         if elArgs[0] in [el.name for el in working["elements"]]:
             print("Name must be unique (all other args valid).")
             return
-        newEl = ELEMENT_TYPES[elType](*elArgs)
+        newEl = cli.ELEMENT_TYPES[elType](*elArgs)
 
         working["elements"].append(newEl)
         refresh_canvas()
@@ -199,7 +182,7 @@ class ModuleEditor(cmd.Cmd):
         if len(line.split()) + line.endswith(" ") > 2: 
             return []
 
-        valid = list(ELEMENT_TYPES.keys())
+        valid = list(cli.ELEMENT_TYPES.keys())
         return [s for s in valid if s.startswith(text)]
 
     def do_ls(self, line):
@@ -219,7 +202,7 @@ class ModuleEditor(cmd.Cmd):
         if not args: 
             if not working: 
                 # If no open comp, print composition files
-                print(*[os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)], sep="\t\t")
+                print(*[os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)], sep="\t\t")
             else: 
                 print(*[el.name.value for el in working["elements"]], sep="\t\t")
             return
@@ -330,6 +313,75 @@ class ModuleEditor(cmd.Cmd):
                     break
         return [s for s in valid if s.startswith(text)]
 
+    def do_edit(self, line):
+        '''Select object for extended editing
+        
+        Usage: edit [obj]
+        
+        obj: str
+            Name of object to modify'''
+
+        global working
+        if not working: 
+            print("Must have open composition!")
+            return
+
+        args = parse(line)
+        
+        # Find objects
+        obj = None
+        for el in working["elements"]:
+            if el.name.value == args[0]:
+                obj = el
+                break
+        if obj is None: 
+            print("Object not found")
+            return
+
+        # Start object editor CLI
+        ElementEditor(self).cmdloop()
+
+        # # Find property
+        # # prop = None
+        # for p, v in vars(el).items():
+        #     if p == args[1]:
+        #         # Check types of provided values
+        #         argList = []
+        #         for i in range(len(v.type_)):
+        #             t = Elements.Property.typemap_str[v.type_[i]]
+        #             try:
+        #                 arg = t(args[2+i])
+        #                 # Add'l typecheck
+        #                 if not isinstance(arg, t):
+        #                     raise ValueError
+        #             except ValueError:
+        #                 print(f"Wrong type (param {i}) - type of {p} must be "
+        #                 f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
+        #                 return
+        #             except IndexError: 
+        #                 print(f"Not enough arguments: param {p} requires "
+        #                 f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
+        #                 return
+        #             # Add arg to list
+        #             argList.append(arg)
+
+        #         # Set property value
+        #         if len(argList) > 1:
+        #             val = tuple(argList)
+        #         else:
+        #             val = argList[0]
+        #         vars(el)[p]["value"] = val
+        #         print(f"Set {el.name.value}.{p} to {val}")
+        #         # Update JSON, canvas
+        #         write_json()
+        #         refresh_canvas()
+        #         return
+                
+        # # If prop not found
+        # print("Property not found")
+        # print("Use `ls` to view object properties")
+        # return
+
     def do_cp(self, line):
         '''Copy existing element or composition, maintaining all properties
         
@@ -355,8 +407,8 @@ class ModuleEditor(cmd.Cmd):
                 return
             
             # If comp file is found, copy file under new name
-            srcPath = os.path.join(SRC_PATH, args[0]+".json")
-            destPath = os.path.join(SRC_PATH, args[1]+".json")
+            srcPath = os.path.join(cli.SRC_PATH, args[0]+".json")
+            destPath = os.path.join(cli.SRC_PATH, args[1]+".json")
             # Check for existing comp file
             if not os.path.isfile(srcPath):
                 print("Composition file not found")
@@ -393,7 +445,7 @@ class ModuleEditor(cmd.Cmd):
             if len(line.split()) + line.endswith(" ") > 2: 
                 return []
             
-            valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
+            valid = [os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)]
             return [v for v in valid if v.startswith(text)]
         else:
             # Ignore after first argument
@@ -420,7 +472,7 @@ class ModuleEditor(cmd.Cmd):
 
         if not working: 
             # If no open comp, remove composition file
-            srcPath = os.path.join(SRC_PATH, args[0]+".json")
+            srcPath = os.path.join(cli.SRC_PATH, args[0]+".json")
             # Check for existing comp file
             if not os.path.isfile(srcPath):
                 print("Composition file not found")
@@ -467,7 +519,7 @@ class ModuleEditor(cmd.Cmd):
             if len(line.split()) + line.endswith(" ") > 2: 
                 return []
             
-            valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
+            valid = [os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)]
             return [v for v in valid if v.startswith(text)]
         else:
             # Ignore after first argument
@@ -479,84 +531,27 @@ class ModuleEditor(cmd.Cmd):
         
     def do_close(self, line):
         'Close current working composition'
-        global working, canvas, matrix
+        global working
         if not working:
             # Directly return if no composition is open
             return
         write_json()
         working = {}
         # Reset canvas
-        canvas = matrix.CreateFrameCanvas()
-        matrix.SwapOnVSync(canvas)
+        cli.canvas = cli.matrix.CreateFrameCanvas()
+        cli.matrix.SwapOnVSync(cli.canvas)
 
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
-        global canvas, matrix
         print("Closing ModuleEditor...")
         self.do_close(None)
-        canvas.Clear()
-        matrix.SwapOnVSync(canvas)
+        cli.canvas.Clear()
+        cli.matrix.SwapOnVSync(cli.canvas)
         return True
 
-def parse(line: str) -> tuple:
-    'Convert space-delimited arguments to tuple of strings'
-    args = tuple(line.split())
-    log.debug(args)
-    return args
-
-def new_json():
-    '''Generates fresh JSON template
-
-    Creates sub-dict for each class name in ELEMENT_TYPES
-    '''
-    outDict = {}
-    for t in ELEMENT_TYPES:
-        outDict[t] = {}
-    return outDict
-
-def write_json():
-    'Write changes to JSON file'
-    global working
-    # Generate JSON from element list
-    if not working: 
-        warn("No open composition, no JSON written", RuntimeWarning)
-        return
-    workingJson = {}
-    for el in working["elements"]:
-        elType = ELEMENT_CLASS_NAMES[type(el)]
-        if workingJson.get(elType) is None:
-            workingJson[elType] = []
-        workingJson[elType].append(vars(el))
-
-    with open(working["path"], "w") as file:
-        json.dump(workingJson, file, cls=Elements.CEnc)
-
-def print_props(obj: Any):
-    '''Print all object properties and their values in formatted output
-    
-    obj: Any
-        Object to print'''
-    
-    for k, v in vars(obj).items():
-        if isinstance(v, Elements.Property):
-            print(f"{k}: {v.value}")
-        else: 
-            print(f"{k}: {v}")
-
-def refresh_canvas():
-    global working, canvas, matrix
-    if not working:
-        raise RuntimeError("Cannot draw without open composition")
-
-    canvas = matrix.CreateFrameCanvas()
-    for el in working["elements"]:
-        el.draw(canvas)
-    matrix.SwapOnVSync(canvas)
-    return
 
 if __name__ == "__main__":
    ModuleEditor().cmdloop() 
-
 
 # # Load matrix from .env values
 # matrix = config.matrix_from_env()
