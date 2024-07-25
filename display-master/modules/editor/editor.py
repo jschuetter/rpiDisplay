@@ -10,7 +10,6 @@ from config import FONTS_PATH
 
 # CLI dependencies
 import cmd
-import readline
 from modules.src import Elements
 # from modules.src.Elements import IconElement
 import os, json
@@ -19,6 +18,8 @@ import logging
 from typing import Any
 from warnings import warn
 import re
+from shutil import copy as fcopy
+from copy import deepcopy
 
 log = logging.getLogger(__name__)
 
@@ -150,18 +151,6 @@ class ModuleEditor(cmd.Cmd):
         valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
         return [v for v in valid if v.startswith(text)]
 
-    def do_close(self, line):
-        'Close current working composition'
-        global working, canvas, matrix
-        if not working:
-            # Directly return if no composition is open
-            return
-        write_json()
-        working = {}
-        # Reset canvas
-        canvas = matrix.CreateFrameCanvas()
-        matrix.SwapOnVSync(canvas)
-
     def do_add(self, line):
         '''Add new element to current composition
 
@@ -240,7 +229,7 @@ class ModuleEditor(cmd.Cmd):
                     print_props(el)
                     return
         print("Object not found.\n")
-        print(self.do_ls.__doc__)
+        self.do_help("ls")
         return
 
     def complete_ls(self, text, line, begidx, endidx):
@@ -340,6 +329,165 @@ class ModuleEditor(cmd.Cmd):
                     valid = list(vars(el).keys())
                     break
         return [s for s in valid if s.startswith(text)]
+
+    def do_cp(self, line):
+        '''Copy existing element or composition, maintaining all properties
+        
+        Usage: cp [obj] [newName]
+        
+        obj: str
+            Name of object to copy
+        newName: str
+            Name of object produced by copy operation'''
+
+        global working
+
+        args = parse(line)
+        if len(args) < 2:
+            self.do_help("cp")
+            return
+
+        if not working: 
+            # Check provided value for copyName
+            if not re.match("^[A-Za-z0-9_]*$", args[1]):
+                print("Invalid composition name.")
+                print("Comp names must only contain alphanumeric characters and underscores.")
+                return
+            
+            # If comp file is found, copy file under new name
+            srcPath = os.path.join(SRC_PATH, args[0]+".json")
+            destPath = os.path.join(SRC_PATH, args[1]+".json")
+            # Check for existing comp file
+            if not os.path.isfile(srcPath):
+                print("Composition file not found")
+                return
+            fcopy(srcPath, destPath)
+            if os.path.isfile(destPath):
+                print(f"Copied {args[0]} to {args[1]}.")
+            else:
+                print("Failed to copy.")
+            return
+        else: 
+            # Check provided copyName for uniqueness
+            if args[1] in [el.name for el in working["elements"]]:
+                print("Name must be unique (all other args valid).")
+                return
+        
+            for el in working["elements"]:
+                if el.name.value == args[0]:
+                    elCopy = deepcopy(el)
+                    vars(elCopy)["name"]["value"] = args[1]
+                    working["elements"].append(elCopy)
+                    write_json()
+                    # refresh_canvas()
+                    return
+            print("Object not found.\n")
+            self.do_help("cp")
+            return
+
+    def complete_cp(self, text, line, begidx, endidx):
+        global working
+        # Complete comp names if comp is open; else complete element names
+        if not working:
+            # Ignore after first argument
+            if len(line.split()) + line.endswith(" ") > 2: 
+                return []
+            
+            valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
+            return [v for v in valid if v.startswith(text)]
+        else:
+            # Ignore after first argument
+            if len(line.split()) + line.endswith(" ") > 2: 
+                return []
+
+            valid = [el.name.value for el in working["elements"]]
+            return [s for s in valid if s.startswith(text)]
+
+    def do_rm(self, line):
+        '''Remove existing element or comp
+        
+        Usage: rm [obj]
+        
+        obj: str
+            Name of object to remove'''
+
+        global working
+
+        args = parse(line)
+        if not args: 
+            self.do_help("rm")
+            return
+
+        if not working: 
+            # If no open comp, remove composition file
+            srcPath = os.path.join(SRC_PATH, args[0]+".json")
+            # Check for existing comp file
+            if not os.path.isfile(srcPath):
+                print("Composition file not found")
+                return
+            # Confirm deletion
+            while True:
+                confirm = input(f"Remove comp {args[0]}? (y/n)")
+                confirm = confirm.partition(" ")[0].lower()
+                if confirm in ["y", "yes"]: 
+                    os.remove(srcPath)
+                    if not os.path.exists(srcPath):
+                        print(f"Removed {args[0]}.")
+                    else:
+                        print("Failed to remove.")
+                    return
+                elif confirm in ["n", "no"]:
+                    return 
+        else: 
+            for el in working["elements"]:
+                if el.name.value == args[0]:
+                    while True:
+                        confirm = input(f"Remove element {args[0]}? (y/n)")
+                        confirm = confirm.partition(" ")[0].lower()
+                        if confirm in ["y", "yes"]: 
+                            working["elements"].remove(el)
+                            if el not in working["elements"]:
+                                print(f"Removed {args[0]}.")
+                            else:
+                                print("Failed to remove.")
+                            write_json()
+                            refresh_canvas()
+                            return
+                        elif confirm in ["n", "no"]:
+                            return 
+            print("Object not found.\n")
+            self.do_help("rm")
+            return
+
+    def complete_rm(self, text, line, begidx, endidx):
+        global working
+        # Complete comp names if comp is open; else complete element names
+        if not working:
+            # Ignore after first argument
+            if len(line.split()) + line.endswith(" ") > 2: 
+                return []
+            
+            valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
+            return [v for v in valid if v.startswith(text)]
+        else:
+            # Ignore after first argument
+            if len(line.split()) + line.endswith(" ") > 2: 
+                return []
+
+            valid = [el.name.value for el in working["elements"]]
+            return [s for s in valid if s.startswith(text)]
+        
+    def do_close(self, line):
+        'Close current working composition'
+        global working, canvas, matrix
+        if not working:
+            # Directly return if no composition is open
+            return
+        write_json()
+        working = {}
+        # Reset canvas
+        canvas = matrix.CreateFrameCanvas()
+        matrix.SwapOnVSync(canvas)
 
     def do_exit(self, line):
         'Exit ModuleEditor CLI'
