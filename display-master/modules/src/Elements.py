@@ -39,6 +39,18 @@ class Property:
     '''
 
     allowedModes = ["l", "s", "n", "n2"]
+    modemap = {
+        "l":"literal",
+        "s":"scrollable",
+        "n":"numeric",
+        "n2":"numeric tuple"
+    }
+    modehints = {
+        "l":"assignable by literal value only",
+        "s":"scroll through allowed values using up/down arrows",
+        "n":"numeric value; can be incremented/decremented using up/down arrows",
+        "n2":"tuple of numeric values; can be adjusted using (left/right, up/down) arrow keys"
+    }
     typemap_str = {
         "str":str,
         "int":int,

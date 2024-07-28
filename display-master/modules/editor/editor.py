@@ -339,7 +339,7 @@ class ModuleEditor(cmd.Cmd):
             return
 
         # Start object editor CLI
-        ElementEditor(self).cmdloop()
+        ElementEditor(obj).cmdloop()
 
         # # Find property
         # # prop = None
