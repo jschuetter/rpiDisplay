@@ -1,7 +1,7 @@
 import cmd
 from modules.src import Elements
 from modules.src.Elements import Property
-from cli import working, parse, write_json, refresh_canvas
+from cli import working, parse, write_json, refresh_canvas, print_props
 import sys, tty, termios
 from copy import deepcopy
 
@@ -15,11 +15,11 @@ class ElementEditor(cmd.Cmd):
     def do_set(self, line):
         '''Set property value for specified object and prop
         
-        Usage: set [propName] [value]
+        Usage: set [propName] [?value]
         
         propName: str
             Name of property to modify
-        value: Any
+        value: Any (optional)
             New property value'''
 
         if not working: 
@@ -315,3 +315,19 @@ class ElementEditor(cmd.Cmd):
         else: 
             # Invalid mode, should not occur
             raise ValueError(f"Invalid property mode: {propName}:{prop.mode}")
+
+
+    def do_ls(self, line):
+        '''Print list of properties of current element
+        
+        Usage: ls'''
+
+        print(*[prop for prop in vars(self.obj).keys()], sep="\t\t")
+        return
+
+    def do_done(self, line):
+        '''Exit ModuleEditor CLI
+        
+        Usage: done'''
+        print("Returning to ModuleEditor...")
+        return True

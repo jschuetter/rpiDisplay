@@ -188,12 +188,11 @@ class ModuleEditor(cmd.Cmd):
     def do_ls(self, line):
         '''Print list of elements in current directory
         
-        Usage: ls [dir - WIP]
+        Usage: ls [?obj]
         
-        dir: str
-            Name of directory to print
-            Prints objects in directory or, if dir is name of object
-            in current working directory, prints object properties'''
+        obj: str (optional)
+            Name of object to print
+            Prints object properties'''
         
         global working
 
@@ -341,46 +340,13 @@ class ModuleEditor(cmd.Cmd):
         # Start object editor CLI
         ElementEditor(obj).cmdloop()
 
-        # # Find property
-        # # prop = None
-        # for p, v in vars(el).items():
-        #     if p == args[1]:
-        #         # Check types of provided values
-        #         argList = []
-        #         for i in range(len(v.type_)):
-        #             t = Elements.Property.typemap_str[v.type_[i]]
-        #             try:
-        #                 arg = t(args[2+i])
-        #                 # Add'l typecheck
-        #                 if not isinstance(arg, t):
-        #                     raise ValueError
-        #             except ValueError:
-        #                 print(f"Wrong type (param {i}) - type of {p} must be "
-        #                 f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
-        #                 return
-        #             except IndexError: 
-        #                 print(f"Not enough arguments: param {p} requires "
-        #                 f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
-        #                 return
-        #             # Add arg to list
-        #             argList.append(arg)
+    def complete_edit(self, text, line, begidx, endidx):
+        numArgs = len(line.split()) + line.endswith(" ")
 
-        #         # Set property value
-        #         if len(argList) > 1:
-        #             val = tuple(argList)
-        #         else:
-        #             val = argList[0]
-        #         vars(el)[p]["value"] = val
-        #         print(f"Set {el.name.value}.{p} to {val}")
-        #         # Update JSON, canvas
-        #         write_json()
-        #         refresh_canvas()
-        #         return
-                
-        # # If prop not found
-        # print("Property not found")
-        # print("Use `ls` to view object properties")
-        # return
+        valid = []
+        if numArgs == 2:
+            valid = [el.name.value for el in working["elements"]]
+        return [s for s in valid if s.startswith(text)]
 
     def do_cp(self, line):
         '''Copy existing element or composition, maintaining all properties
@@ -530,7 +496,9 @@ class ModuleEditor(cmd.Cmd):
             return [s for s in valid if s.startswith(text)]
         
     def do_close(self, line):
-        'Close current working composition'
+        '''Closes current working composition
+        
+        Usage: close'''
         global working
         if not working:
             # Directly return if no composition is open
@@ -542,7 +510,9 @@ class ModuleEditor(cmd.Cmd):
         cli.matrix.SwapOnVSync(cli.canvas)
 
     def do_exit(self, line):
-        'Exit ModuleEditor CLI'
+        '''Exits ModuleEditor CLI and closes open composition (if any)
+        
+        Usage: exit'''
         print("Closing ModuleEditor...")
         self.do_close(None)
         cli.canvas.Clear()
@@ -552,36 +522,3 @@ class ModuleEditor(cmd.Cmd):
 
 if __name__ == "__main__":
    ModuleEditor().cmdloop() 
-
-# # Load matrix from .env values
-# matrix = config.matrix_from_env()
-# 
-# # Load fonts
-# timeFont = graphics.Font()
-# timeFont.LoadFont(FONTS_PATH+"basic/7x13B.bdf")
-# dateFont = graphics.Font()
-# dateFont.LoadFont(FONTS_PATH+"basic/5x7.bdf")
-# fontColor = graphics.Color(255, 255, 255)
-# 
-# def main():
-#     # Create canvas for caching next frame
-#     nextCanvas = matrix.CreateFrameCanvas()
-# 
-#     # Continuously update clock
-#     while True:
-#         nextCanvas.Clear()
-#         now = dt.datetime.now(tz=TZ_EST)
-#         # Draw date text, then time
-#         graphics.DrawText(nextCanvas, dateFont, DATE_X, DATE_Y, fontColor, 
-#                 now.strftime(DATE_FORMAT))
-#         if MILITARY_TIME:
-#             graphics.DrawText(nextCanvas, timeFont, TIME_X, TIME_Y, fontColor, 
-#                 now.strftime(TIME_FORMAT_24))
-#         else:
-#             graphics.DrawText(nextCanvas, timeFont, TIME_X-1, TIME_Y, fontColor, 
-#                 now.strftime(TIME_FORMAT_12))
-#         nextCanvas = matrix.SwapOnVSync(nextCanvas)
-#         time.sleep(1)
-# 
-# if __name__=="__main__":
-#     main()
