@@ -14,7 +14,7 @@ from modules.src import Elements
 from ElementEditor import ElementEditor
 import cli # Relevant global vars & methods
 from cli import working, parse, \
-    refresh_canvas, write_json, print_props
+    refresh_canvas, write_json, print_props, update_all
 
 import os, re, json
 import logging
@@ -174,8 +174,7 @@ class ModuleEditor(cmd.Cmd):
         newEl = cli.ELEMENT_TYPES[elType](*elArgs)
 
         working["elements"].append(newEl)
-        refresh_canvas()
-        write_json()
+        update_all()
 
     def complete_add(self, text, line, begidx, endidx):
         # Ignore completion after first argument
@@ -281,6 +280,12 @@ class ModuleEditor(cmd.Cmd):
                     # Add arg to list
                     argList.append(arg)
 
+                # Test for value in list of accepted values
+                if v.mode == "s" and val not in v.options:
+                    print(f"Value {val} not in allowed values")
+                    print(f"Choose one of: {v.options}")
+                    return
+                
                 # Set property value
                 if len(argList) > 1:
                     val = tuple(argList)
@@ -288,9 +293,7 @@ class ModuleEditor(cmd.Cmd):
                     val = argList[0]
                 vars(el)[p]["value"] = val
                 print(f"Set {el.name.value}.{p} to {val}")
-                # Update JSON, canvas
-                write_json()
-                refresh_canvas()
+                update_all()
                 return
                 
         # If prop not found
@@ -396,8 +399,7 @@ class ModuleEditor(cmd.Cmd):
                     elCopy = deepcopy(el)
                     vars(elCopy)["name"]["value"] = args[1]
                     working["elements"].append(elCopy)
-                    write_json()
-                    # refresh_canvas()
+                    update_all()
                     return
             print("Object not found.\n")
             self.do_help("cp")
@@ -468,8 +470,7 @@ class ModuleEditor(cmd.Cmd):
                                 print(f"Removed {args[0]}.")
                             else:
                                 print("Failed to remove.")
-                            write_json()
-                            refresh_canvas()
+                            update_all()
                             return
                         elif confirm in ["n", "no"]:
                             return 

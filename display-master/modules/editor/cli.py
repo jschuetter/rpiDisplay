@@ -87,3 +87,28 @@ def refresh_canvas():
         el.draw(canvas)
     matrix.SwapOnVSync(canvas)
     return
+
+def sort_working():
+    '''Sort working dictionary by layer, then re-index element layers based on new positions'''
+    working["elements"].sort(key=lambda el: el.layer.value)
+    for i in range(len(working["elements"])):
+        el = working["elements"][i]
+        el.layer.value = i
+
+
+
+def update_all(do_sort: bool = True, do_reindex: bool = True, do_write_json: bool = True, do_refresh_canvas: bool = True):
+    '''Sort working dictionary by layer, then update JSON file and matrix display
+    
+    do_sort: runs sort_working() if true
+    do_write_json: runs write_json() if true
+    do_refresh_canvas: runs refresh_canvas() if true'''
+
+    # if do_sort: sort_working()
+    if do_sort: working["elements"].sort(key=lambda el: el.layer.value)
+    if do_reindex: 
+        for i in range(len(working["elements"])):
+            el = working["elements"][i]
+            el.layer.value = i
+    if do_write_json: write_json()
+    if do_refresh_canvas: refresh_canvas()

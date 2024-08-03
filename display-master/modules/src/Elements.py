@@ -72,7 +72,7 @@ class Property:
                 setattr(clsObj, k, v)
         return clsObj
     
-    def __init__(self, val: Any, typ: str, mod: str = "l", opt: list = []):
+    def __init__(self, val: Any, typ: type, mod: str = "l", opt: list = []):
         '''
         Parameters
         ----------
@@ -128,6 +128,7 @@ class MatrixElement:
 
         self.name = Property(name_, str)
         self.group = []
+        self.layer = Property(0, int, "n")
         self.pos = Property((0,0), (int, int), "n2")
     
     def duplicate(self):

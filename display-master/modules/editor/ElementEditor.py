@@ -1,7 +1,7 @@
 import cmd
 from modules.src import Elements
 from modules.src.Elements import Property
-from cli import working, parse, write_json, refresh_canvas, print_props
+from cli import working, parse, update_all
 import sys, tty, termios
 from copy import deepcopy
 
@@ -48,9 +48,6 @@ class ElementEditor(cmd.Cmd):
             print("Property not found")
             print("Use `ls` to view object properties")
             return
-        
-        # IF PROPERTY IS FOUND: 
-        # self.prompt += f"{propName}> "
 
         if value is None:
             # If prop is found and no value is provided, prompt for value
@@ -62,8 +59,8 @@ class ElementEditor(cmd.Cmd):
             # Handle arguments provided on command line
             # Check types of provided values
             argList = []
-            for i in range(len(v.type_)):
-                t = Elements.Property.typemap_str[v.type_[i]]
+            for i in range(len(prop.type_)):
+                t = Elements.Property.typemap_str[prop.type_[i]]
                 try:
                     arg = t(args[1+i])
                     # Add'l typecheck
@@ -71,11 +68,11 @@ class ElementEditor(cmd.Cmd):
                         raise ValueError
                 except ValueError:
                     print(f"Wrong type (param {i}) - type of {p} must be "
-                    f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
+                    f"{ [Elements.Property.typemap_str[t] for t in prop.type_] }")
                     return
                 except IndexError: 
                     print(f"Not enough arguments: param {p} requires "
-                    f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
+                    f"{ [Elements.Property.typemap_str[t] for t in prop.type_] }")
                     return
                 # Add arg to list
                 argList.append(arg)
@@ -85,11 +82,17 @@ class ElementEditor(cmd.Cmd):
                 val = tuple(argList)
             else:
                 val = argList[0]
+
+            # Test for value in list of accepted values
+            if prop.mode == "s" and val not in prop.options:
+                print(f"Value {val} not in allowed values")
+                print(f"Choose one of: {prop.options}")
+                return
+            
             vars(self.obj)[p]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
             # Update JSON, canvas
-            write_json()
-            refresh_canvas()
+            update_all()
             return
     
     def complete_set(self, text, line, begidx, endidx):
@@ -178,7 +181,7 @@ class ElementEditor(cmd.Cmd):
                     print(prop.options[scrollInd], end="\r")
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = prop.options[scrollInd]
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char in ('down', 's'):
                     scrollInd -= 1
                     if scrollInd <= -1:
@@ -186,12 +189,12 @@ class ElementEditor(cmd.Cmd):
                     print(prop.options[scrollInd], end="\r")
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = prop.options[scrollInd]
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char == '\x03':
                     # If Ctrl+C received, cancel input
                     print("Cancelling input", end = '\r\n')
                     vars(self.obj)[propName]["value"] = origValue
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                     return
                 
             # On return, set property value
@@ -206,36 +209,34 @@ class ElementEditor(cmd.Cmd):
                 val = argList[0]
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
-            # Update JSON, canvas
-            write_json()
-            refresh_canvas()
+            update_all()
             return
                 
         elif prop.mode == "n":
             # If property is numeric, allow entering literal value 
             # or nudging value
             origValue = deepcopy(prop.value)
-            val = prop.value
             for char in getch():
+                val = prop.value
+                # Clear line for input
+                sys.stdout.write('\x1b[2K')
                 if char in ('up', 'w'):
                     val += 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char in ('down', 's'):
                     val -= 1
-                    if scrollInd <= -1:
-                        scrollInd = len(prop.options) - 1
-                    print(prop.options[scrollInd])
+                    print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char == '\x03':
                     # If Ctrl+C received, cancel input
                     print("Cancelling input", end='\r\n')
                     vars(self.obj)[propName]["value"] = origValue
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                     return
                 
             # On return, set property value
@@ -249,9 +250,7 @@ class ElementEditor(cmd.Cmd):
                 val = argList[0]
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
-            # Update JSON, canvas
-            write_json()
-            refresh_canvas()
+            update_all()
             return
             
         elif prop.mode == "n2":
@@ -265,30 +264,30 @@ class ElementEditor(cmd.Cmd):
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char in ('left', 'a'):
                     val[0] -= 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char in ('up', 'w'):
                     val[1] += 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char in ('down', 's'):
                     val[1] -= 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                 elif char == '\x03':
                     # If Ctrl+C received, cancel input
                     print("Cancelling input", end='\r\n')
                     vars(self.obj)[propName]["value"] = origValue
-                    refresh_canvas()
+                    update_all(do_reindex=False, do_write_json=False)
                     return
                 
             # On return, set property value
@@ -302,9 +301,7 @@ class ElementEditor(cmd.Cmd):
                 val = argList[0]
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
-            # Update JSON, canvas
-            write_json()
-            refresh_canvas()
+            update_all()
             return
         
         elif prop.mode == "l":
