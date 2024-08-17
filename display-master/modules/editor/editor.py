@@ -114,6 +114,7 @@ class ModuleEditor(cmd.Cmd):
         # path = os.path.join(SRC_PATH, "tempName.json")
         print(path)
         with open(path) as file:
+            working["name"] = args[0]
             working["path"] = path
             jsonFile = json.load(file)
             #Populate element list -- iterate over classes, then objects
@@ -358,8 +359,10 @@ class ModuleEditor(cmd.Cmd):
         
         obj: str
             Name of object to copy
+            May be Element or composition
         newName: str
-            Name of object produced by copy operation'''
+            Name of object produced by copy operation
+            Convention must match that of `obj`'''
 
         global working
 
@@ -509,6 +512,41 @@ class ModuleEditor(cmd.Cmd):
         # Reset canvas
         cli.canvas = cli.matrix.CreateFrameCanvas()
         cli.matrix.SwapOnVSync(cli.canvas)
+
+    def do_export(self, line):
+        '''Exports composition as Python file with same name. Exports current comp
+        if any is open; otherwise exports comp with provided name
+        
+        Usage: export [compName]
+        
+        compName: name of composition to export'''
+
+        global working
+        if working: 
+            # Export current composition if there is one open
+            cli.export_code(working["name"], working["elements"])
+        else: 
+            # Export comp name provided in argument
+            (compName,) = cli.parse(line)
+            # Check compName validity
+            path = os.path.join(cli.SRC_PATH, compName + ".json")
+            # LOG: path being checked
+            if not os.path.isfile(path):
+                print("First argument must be valid composition name")
+                print("Use `ls` to see existing comps or `new` to create a comp")
+                return
+            # Export comp
+            self.do_open(compName)
+            cli.export_code(working["name"], working["elements"])
+            self.do_close(None)
+
+    def complete_export(self, text, line, begidx, endidx):
+        # Ignore after 1st argument, or if open comp
+        global working
+        if working or len(line.split()) + line.endswith(" ") > 2: 
+            return []
+        valid = [os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)]
+        return [v for v in valid if v.startswith(text)]    
 
     def do_exit(self, line):
         '''Exits ModuleEditor CLI and closes open composition (if any)

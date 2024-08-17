@@ -116,8 +116,63 @@ class Property:
                 f"'options':{self.options}}}")
 
 class MatrixElement: 
-    params = [add_param("name", str, "Name of Element object (dev only).")]
+    '''Parent class for all matrix elements
 
+    SCHEMA
+    Class variables: 
+    - params [list]: list of params added using the `add_param` method
+    - docstr [str]: class docstring
+    Instance variables: 
+    - Name [Property]: literal property containing name of element
+    - Group [list]: list of strings containing names of groups of which this element is a member
+    - Layer [Property]: numeric property indicating z-index of element
+    - Pos [Property]: numeric pair property representing pixel coordinates of element
+    [Subclasses may add data elements as needed]
+
+    Class methods: 
+    - testargs(*args) [str | None]: tests the provided tuple of arguments for
+        validity according to class spec and returns str msg, or None if all are valid.
+    - from_dict(dict) [MatrixElement]: constructs a MatrixElement from the provided __dict__
+    Methods: 
+    - __init__ [None]
+    - duplicate [MatrixElement]: returns a deep copy of the element
+    - draw(canvas) [None]: draws the element on the provided Canvas object
+    - draw_code() [str]: returns Python code for drawing the element
+        Always returns at indent level 1
+    - json [dict]: returns element data as dict
+    [Subclasses may also add methods if needed]
+    '''
+
+    params = [add_param("name", str, "Name of Element object (dev only).")]
+    docstr = "An element for use with an RGB LED matrix."
+
+    @classmethod
+    def testArgs(cls, *args):
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if type(args[0]) is not str: 
+            return "Invalid element name."
+        for e in args[1:3]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position arguments must be int values"
+        # Return None if all arguments are valid
+        return None
+    
+    @classmethod
+    def from_dict(cls, src: dict):
+        clsObj = cls("default")
+        for k, v in src.items():
+            if type(v) is dict:
+                setattr(clsObj, k, Property.from_dict(v))
+            else: 
+                setattr(clsObj, k, v)
+        return clsObj
+    
     def __init__(self, name_: str):
         '''
         Parameters
@@ -134,6 +189,15 @@ class MatrixElement:
     def duplicate(self):
         return deepcopy(self)
 
+    def draw(self, canvas: FrameCanvas):
+        return None
+    
+    def draw_code(self, canvas: FrameCanvas) -> str:
+        return None
+
+    def json(self) -> dict:
+        return self.__dict__
+
 # Element for displaying static bitmap images
 # Requires .bmp filetype
 class IconElement(MatrixElement):
@@ -148,7 +212,7 @@ class IconElement(MatrixElement):
             print_params(params)
     
     @classmethod
-    def testArgs(cls, *args) -> int:
+    def testArgs(cls, *args):
         '''Tests validity of arguments. 
         Returns string response if invalid args. 
         Returns None if valid.'''
@@ -201,6 +265,15 @@ class IconElement(MatrixElement):
         img = img.convert("RGB")
         # print(self.pos.value)
         canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
+    
+    def draw_code(self) -> str:
+        return (f"    # IconElement '{self.name.value}'\n"
+                f"    #   Name: {self.name.value}\n"
+                f"    #   Path: {self.path.value}\n"
+                f"    #   Pos: {self.pos.value}\n"
+                f"    img = Image.open('{self.path.value}')\n"
+                f"    img = img.convert('RGB')\n"
+                f"    canvas.SetImage(img, {self.pos.value[0]}, {self.pos.value[1]})\n")
 
     def json(self):
         return self.__dict__

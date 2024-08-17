@@ -12,6 +12,7 @@ import logging
 from warnings import warn
 import json
 from typing import Any
+from shutil import copy as fcopy
 
 from modules.src import Elements
 
@@ -112,3 +113,25 @@ def update_all(do_sort: bool = True, do_reindex: bool = True, do_write_json: boo
             el.layer.value = i
     if do_write_json: write_json()
     if do_refresh_canvas: refresh_canvas()
+
+def export_code(fileName: str, compElements: list):
+    '''Exports current composition as Python code and writes to output file.
+    N.B. all code used for exporting must use 4-space tabs (not 2-space or tab chars).
+    
+    fileName: name of new file to be created (no extension)
+        Must only be composed of alphanumeric chars and underscores
+        (Same convention as composition names)
+    compElements: list of elements in composition to be exported 
+        (will usually be working["elements"])'''
+
+    fcopy("./matrixBoilerplate.py", f"../{fileName}.py")
+    # Copy boilerplate file and append element code
+    with open(f"../{fileName}.py", 'a') as codeFile: 
+        for el in compElements: 
+            codeFile.write(el.draw_code() + "\n")
+        # Append final code
+        codeFile.write("    canvas = matrix.SwapOnVSync(canvas)\n\n"
+                       "if __name__ == '__main__':\n"
+                       "    main()")
+        
+    print(f"Exported comp {fileName} as {fileName}.py")
