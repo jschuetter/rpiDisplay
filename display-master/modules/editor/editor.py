@@ -13,7 +13,7 @@ import cmd
 from modules.src import Elements
 from ElementEditor import ElementEditor
 import cli # Relevant global vars & methods
-from cli import working, parse, \
+from cli import parse, \
     refresh_canvas, write_json, print_props, update_all
 
 import os, re, json
@@ -36,8 +36,6 @@ class ModuleEditor(cmd.Cmd):
             Name of composition (for JSON storage)
         '''
 
-        global working
-
         parentDir = cli.SRC_PATH
         if not os.path.isdir(parentDir): 
             os.mkdir(parentDir)
@@ -48,7 +46,7 @@ class ModuleEditor(cmd.Cmd):
             print("Comp names must only contain alphanumeric characters and underscores.")
             return
 
-        working = {}
+        cli.working = {}
         path_ = os.path.join(parentDir,compName + ".json")
         if os.path.exists(path_): 
             while True:
@@ -61,15 +59,16 @@ class ModuleEditor(cmd.Cmd):
                     self.do_open(compName)
                     break
                 elif confirm in ["c", "cancel"]: 
-                    working = {}
+                    cli.working = {}
                     print("Canceled creating composition.")
                     return
                 else: 
                     print("Invalid response.")
         # Set comp properties
-        working["name"] = compName
-        working["path"] = path_
-        working["elements"] = []
+        cli.working["name"] = compName
+        cli.working["path"] = path_
+        cli.working["elements"] = []
+        print(cli.working)
 
     def do_open(self, line):
         '''Open matrix composition JSON file
@@ -80,8 +79,6 @@ class ModuleEditor(cmd.Cmd):
             Name of JSON file to open
         '''
 
-        global working
-
         args = parse(line)
 
         if not args: 
@@ -89,7 +86,7 @@ class ModuleEditor(cmd.Cmd):
             print(self.do_open.__doc__)
             return
 
-        if working: 
+        if cli.working: 
             while True:
                 confirm = input("There is already an open composition. "
                     "Do you want to close it and open a new one? (y/n)")
@@ -114,16 +111,16 @@ class ModuleEditor(cmd.Cmd):
         # path = os.path.join(SRC_PATH, "tempName.json")
         print(path)
         with open(path) as file:
-            working["name"] = args[0]
-            working["path"] = path
+            cli.working["name"] = args[0]
+            cli.working["path"] = path
             jsonFile = json.load(file)
             #Populate element list -- iterate over classes, then objects
-            working["elements"] = []
+            cli.working["elements"] = []
             for k, v in jsonFile.items():
                 for props in v:
                     newEl = cli.ELEMENT_TYPES[k].from_dict(props)
                     # print(newEl.__dict__)
-                    working["elements"].append(newEl)
+                    cli.working["elements"].append(newEl)
             refresh_canvas()
 
     def complete_open(self, text, line, begidx, endidx):
@@ -148,9 +145,8 @@ class ModuleEditor(cmd.Cmd):
             See Element classes for details
         '''
 
-        global working
         # Check for open composition
-        if not working: 
+        if not cli.working: 
             print("Must have open composition! \nUse `new` to create a comp or `open` to import one from JSON.")
             return
         
@@ -169,12 +165,12 @@ class ModuleEditor(cmd.Cmd):
             print(invalidArgs)
             print(cli.ELEMENT_TYPES[elType].docstr)
             return
-        if elArgs[0] in [el.name for el in working["elements"]]:
+        if elArgs[0] in [el.name for el in cli.working["elements"]]:
             print("Name must be unique (all other args valid).")
             return
         newEl = cli.ELEMENT_TYPES[elType](*elArgs)
 
-        working["elements"].append(newEl)
+        cli.working["elements"].append(newEl)
         update_all()
 
     def complete_add(self, text, line, begidx, endidx):
@@ -194,19 +190,17 @@ class ModuleEditor(cmd.Cmd):
             Name of object to print
             Prints object properties'''
         
-        global working
-
         args = parse(line)
 
         if not args: 
-            if not working: 
+            if not cli.working: 
                 # If no open comp, print composition files
                 print(*[os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)], sep="\t\t")
             else: 
-                print(*[el.name.value for el in working["elements"]], sep="\t\t")
+                print(*[el.name.value for el in cli.working["elements"]], sep="\t\t")
             return
         else: 
-            for el in working["elements"]:
+            for el in cli.working["elements"]:
                 if el.name.value == args[0]:
                     print_props(el)
                     return
@@ -216,10 +210,10 @@ class ModuleEditor(cmd.Cmd):
 
     def complete_ls(self, text, line, begidx, endidx):
         # Ignore after 1st argument
-        if not working or (len(line.split()) + line.endswith(" ") > 2):
+        if not cli.working or (len(line.split()) + line.endswith(" ") > 2):
             return []
 
-        valid = [el.name.value for el in working["elements"]]
+        valid = [el.name.value for el in cli.working["elements"]]
         return [s for s in valid if s.startswith(text)]
     
     def do_set(self, line):
@@ -234,8 +228,7 @@ class ModuleEditor(cmd.Cmd):
         value: Any
             New property value'''
 
-        global working
-        if not working: 
+        if not cli.working: 
             print("Must have open composition!")
             return
 
@@ -250,7 +243,7 @@ class ModuleEditor(cmd.Cmd):
         
         # Find objects
         obj = None
-        for el in working["elements"]:
+        for el in cli.working["elements"]:
             if el.name.value == args[0]:
                 obj = el
                 break
@@ -307,10 +300,10 @@ class ModuleEditor(cmd.Cmd):
 
         valid = []
         if numArgs == 2:
-            valid = [el.name.value for el in working["elements"]]
+            valid = [el.name.value for el in cli.working["elements"]]
         elif numArgs == 3:
             # Names of properties for selected element
-            for el in working["elements"]:
+            for el in cli.working["elements"]:
                 if el.name.value == line.split()[1]:
                     valid = list(vars(el).keys())
                     break
@@ -324,8 +317,7 @@ class ModuleEditor(cmd.Cmd):
         obj: str
             Name of object to modify'''
 
-        global working
-        if not working: 
+        if not cli.working: 
             print("Must have open composition!")
             return
 
@@ -333,7 +325,7 @@ class ModuleEditor(cmd.Cmd):
         
         # Find objects
         obj = None
-        for el in working["elements"]:
+        for el in cli.working["elements"]:
             if el.name.value == args[0]:
                 obj = el
                 break
@@ -349,7 +341,7 @@ class ModuleEditor(cmd.Cmd):
 
         valid = []
         if numArgs == 2:
-            valid = [el.name.value for el in working["elements"]]
+            valid = [el.name.value for el in cli.working["elements"]]
         return [s for s in valid if s.startswith(text)]
 
     def do_cp(self, line):
@@ -364,14 +356,12 @@ class ModuleEditor(cmd.Cmd):
             Name of object produced by copy operation
             Convention must match that of `obj`'''
 
-        global working
-
         args = parse(line)
         if len(args) < 2:
             self.do_help("cp")
             return
 
-        if not working: 
+        if not cli.working: 
             # Check provided value for copyName
             if not re.match("^[A-Za-z0-9_]*$", args[1]):
                 print("Invalid composition name.")
@@ -393,15 +383,15 @@ class ModuleEditor(cmd.Cmd):
             return
         else: 
             # Check provided copyName for uniqueness
-            if args[1] in [el.name for el in working["elements"]]:
+            if args[1] in [el.name for el in cli.working["elements"]]:
                 print("Name must be unique (all other args valid).")
                 return
         
-            for el in working["elements"]:
+            for el in cli.working["elements"]:
                 if el.name.value == args[0]:
                     elCopy = deepcopy(el)
                     vars(elCopy)["name"]["value"] = args[1]
-                    working["elements"].append(elCopy)
+                    cli.working["elements"].append(elCopy)
                     update_all()
                     return
             print("Object not found.\n")
@@ -409,9 +399,8 @@ class ModuleEditor(cmd.Cmd):
             return
 
     def complete_cp(self, text, line, begidx, endidx):
-        global working
         # Complete comp names if comp is open; else complete element names
-        if not working:
+        if not cli.working:
             # Ignore after first argument
             if len(line.split()) + line.endswith(" ") > 2: 
                 return []
@@ -423,7 +412,7 @@ class ModuleEditor(cmd.Cmd):
             if len(line.split()) + line.endswith(" ") > 2: 
                 return []
 
-            valid = [el.name.value for el in working["elements"]]
+            valid = [el.name.value for el in cli.working["elements"]]
             return [s for s in valid if s.startswith(text)]
 
     def do_rm(self, line):
@@ -434,14 +423,12 @@ class ModuleEditor(cmd.Cmd):
         obj: str
             Name of object to remove'''
 
-        global working
-
         args = parse(line)
         if not args: 
             self.do_help("rm")
             return
 
-        if not working: 
+        if not cli.working: 
             # If no open comp, remove composition file
             srcPath = os.path.join(cli.SRC_PATH, args[0]+".json")
             # Check for existing comp file
@@ -462,14 +449,14 @@ class ModuleEditor(cmd.Cmd):
                 elif confirm in ["n", "no"]:
                     return 
         else: 
-            for el in working["elements"]:
+            for el in cli.working["elements"]:
                 if el.name.value == args[0]:
                     while True:
                         confirm = input(f"Remove element {args[0]}? (y/n)")
                         confirm = confirm.partition(" ")[0].lower()
                         if confirm in ["y", "yes"]: 
-                            working["elements"].remove(el)
-                            if el not in working["elements"]:
+                            cli.working["elements"].remove(el)
+                            if el not in cli.working["elements"]:
                                 print(f"Removed {args[0]}.")
                             else:
                                 print("Failed to remove.")
@@ -482,9 +469,8 @@ class ModuleEditor(cmd.Cmd):
             return
 
     def complete_rm(self, text, line, begidx, endidx):
-        global working
         # Complete comp names if comp is open; else complete element names
-        if not working:
+        if not cli.working:
             # Ignore after first argument
             if len(line.split()) + line.endswith(" ") > 2: 
                 return []
@@ -496,19 +482,18 @@ class ModuleEditor(cmd.Cmd):
             if len(line.split()) + line.endswith(" ") > 2: 
                 return []
 
-            valid = [el.name.value for el in working["elements"]]
+            valid = [el.name.value for el in cli.working["elements"]]
             return [s for s in valid if s.startswith(text)]
         
     def do_close(self, line):
-        '''Closes current working composition
+        '''Closes current cli.working composition
         
         Usage: close'''
-        global working
-        if not working:
+        if not cli.working:
             # Directly return if no composition is open
             return
         write_json()
-        working = {}
+        cli.working = {}
         # Reset canvas
         cli.canvas = cli.matrix.CreateFrameCanvas()
         cli.matrix.SwapOnVSync(cli.canvas)
@@ -521,10 +506,9 @@ class ModuleEditor(cmd.Cmd):
         
         compName: name of composition to export'''
 
-        global working
-        if working: 
+        if cli.working: 
             # Export current composition if there is one open
-            cli.export_code(working["name"], working["elements"])
+            cli.export_code(cli.working["name"], cli.working["elements"])
         else: 
             # Export comp name provided in argument
             (compName,) = cli.parse(line)
@@ -537,13 +521,12 @@ class ModuleEditor(cmd.Cmd):
                 return
             # Export comp
             self.do_open(compName)
-            cli.export_code(working["name"], working["elements"])
+            cli.export_code(cli.working["name"], cli.working["elements"])
             self.do_close(None)
 
     def complete_export(self, text, line, begidx, endidx):
         # Ignore after 1st argument, or if open comp
-        global working
-        if working or len(line.split()) + line.endswith(" ") > 2: 
+        if cli.working or len(line.split()) + line.endswith(" ") > 2: 
             return []
         valid = [os.path.splitext(p)[0] for p in os.listdir(cli.SRC_PATH)]
         return [v for v in valid if v.startswith(text)]    

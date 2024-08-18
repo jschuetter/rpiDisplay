@@ -1,7 +1,8 @@
 import cmd
 from modules.src import Elements
 from modules.src.Elements import Property
-from cli import working, parse, update_all
+import cli
+from cli import parse, update_all
 import sys, tty, termios
 from copy import deepcopy
 
@@ -22,7 +23,7 @@ class ElementEditor(cmd.Cmd):
         value: Any (optional)
             New property value'''
 
-        if not working: 
+        if not cli.working: 
             print("Must have open composition!")
             return
 

@@ -28,7 +28,7 @@ canvas = matrix.CreateFrameCanvas()
 
 ELEMENT_TYPES = {"icon": Elements.IconElement, 
         "image":None, 
-        "text":None, 
+        "text": Elements.TextElement, 
         "rect":None, 
         "ellipse":None
         }
@@ -106,11 +106,12 @@ def update_all(do_sort: bool = True, do_reindex: bool = True, do_write_json: boo
     do_refresh_canvas: runs refresh_canvas() if true'''
 
     # if do_sort: sort_working()
-    if do_sort: working["elements"].sort(key=lambda el: el.layer.value)
-    if do_reindex: 
-        for i in range(len(working["elements"])):
-            el = working["elements"][i]
-            el.layer.value = i
+    if "elements" in working:
+        if do_sort: working["elements"].sort(key=lambda el: el.layer.value)
+        if do_reindex: 
+            for i in range(len(working["elements"])):
+                el = working["elements"][i]
+                el.layer.value = i
     if do_write_json: write_json()
     if do_refresh_canvas: refresh_canvas()
 

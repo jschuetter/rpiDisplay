@@ -1,9 +1,23 @@
 #!/bin/python
-from rgbmatrix import FrameCanvas
+# Import config module
+import sys
+sys.path.insert(0, "../..")
+
+import config
+from config import FONTS_PATH
+
 from copy import deepcopy
 from typing import Any, NewType
-from PIL import Image
 import os, json
+
+from rgbmatrix import FrameCanvas, graphics
+
+# Element dependencies
+# IconElement
+from PIL import Image
+# TextElement
+import webcolors
+from pathlib import Path
 
 def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict:
     '''Helper method for creating parameter dictionaries more concisely
@@ -87,6 +101,15 @@ class Property:
             Required for "scrollable" mode
         '''
 
+        if mod not in self.allowedModes: 
+            raise ValueError("Invalid mode string")
+        self.mode = mod
+        if self.mode == "s" and opt == []:
+            raise ValueError("Options list is required for scrollable mode.")
+        self.options = opt
+        if self.options and val not in self.options:
+            print(f"Allowed list: {self.options}")
+            raise ValueError("Provided value not in allowed list.")
         self.value = val
         # if typ not in Property.typemap_cls:
         #     raise ValueError("Type not in class typemap")
@@ -98,12 +121,6 @@ class Property:
         # print(self.value)
         # print(typeTup)
         self.type_ = typeTup
-        if mod not in self.allowedModes: 
-            raise ValueError("Invalid mode string")
-        self.mode = mod
-        if self.mode == "s" and opt == []:
-            raise ValueError("Options list is required for scrollable mode.")
-        self.options = opt
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
@@ -198,9 +215,12 @@ class MatrixElement:
     def json(self) -> dict:
         return self.__dict__
 
-# Element for displaying static bitmap images
-# Requires .bmp filetype
+######## IMAGE ELEMENTS ########
+
 class IconElement(MatrixElement):
+    '''Element for displaying static bitmap images
+    Requires .bmp filetype'''
+
     params = MatrixElement.params + [
         add_param("path", str, "Relative path to the default icon for this object. " +
                   "Icon must be in .bmp format."),
@@ -232,15 +252,15 @@ class IconElement(MatrixElement):
         # Return None if all arguments are valid
         return None
     
-    @classmethod
-    def from_dict(cls, src: dict):
-        clsObj = cls("default")
-        for k, v in src.items():
-            if type(v) is dict:
-                setattr(clsObj, k, Property.from_dict(v))
-            else: 
-                setattr(clsObj, k, v)
-        return clsObj
+    # @classmethod
+    # def from_dict(cls, src: dict):
+    #     clsObj = cls("default")
+    #     for k, v in src.items():
+    #         if type(v) is dict:
+    #             setattr(clsObj, k, Property.from_dict(v))
+    #         else: 
+    #             setattr(clsObj, k, v)
+    #     return clsObj
 
     def __init__(self, _name: str, imgPath: str = "", x: str = "0", y: str = "0"):
         '''
@@ -250,8 +270,10 @@ class IconElement(MatrixElement):
             Element name - must be unique among sibling Elements
         imgPath: str
             Path of .bmp file to show
-        _pos: tuple[int, int]
-            Tuple (x,y) of position to display image (coordinate of top-left of image)
+        x: int
+            X-coordinate of top-left of image)
+        y: int
+            Y-coordinate of top-left of image)
         '''
 
         super().__init__(_name)
@@ -268,12 +290,136 @@ class IconElement(MatrixElement):
     
     def draw_code(self) -> str:
         return (f"    # IconElement '{self.name.value}'\n"
-                f"    #   Name: {self.name.value}\n"
                 f"    #   Path: {self.path.value}\n"
                 f"    #   Pos: {self.pos.value}\n"
                 f"    img = Image.open('{self.path.value}')\n"
                 f"    img = img.convert('RGB')\n"
                 f"    canvas.SetImage(img, {self.pos.value[0]}, {self.pos.value[1]})\n")
+
+    def json(self):
+        return self.__dict__
+
+######## TEXT ELEMENTS ########
+
+class TextElement(MatrixElement):
+    '''Element for displaying static text
+    Element size is determined by font and text content'''
+
+    params = MatrixElement.params + [
+        add_param("font", str, f"Font file to use, relative to base fonts path. \
+                  Fonts may be found at '{FONTS_PATH}'"),
+        add_param("textColor", str, "Hex value of font color to use (preceded by #). \
+            Web color names may also be used. "),
+        add_param("x_pos", int, "X-coordinate of icon (top-left)."),
+        add_param("y_pos", int, "Y-coordinate of icon (top-left)")
+    ]
+    docstr = "Static text.\n\n" + \
+        "Usage: add text [name] [textContent] [font] [textColor] [x_pos] [y_pos]\n\n" + \
+            print_params(params)
+    
+    @classmethod
+    def testArgs(cls, *args):
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if not isinstance(args[0], str):
+            return "Invalid element name."
+        if not isinstance(args[1], str):
+            return "Text content must be str."
+        fontPath = FONTS_PATH + args[2]
+        if not os.path.isfile(fontPath) or not fontPath.endswith(".bdf"): 
+            print(fontPath)
+            return "Invalid font path."
+        if args[3].startswith("#"):
+            try: 
+                webcolors.hex_to_rgb(args[3])
+            except ValueError:
+                return "Provided hex color is invalid."
+        else: 
+            try: 
+                webcolors.name_to_rgb(args[3])
+            except ValueError: 
+                return "Color value must be in hex, beginning with #, or \
+                a valid CSS3 color name. "
+        for e in args[4:6]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position arguments must be int values"
+        # Return None if all arguments are valid
+        return None
+    
+    # @classmethod
+    # def from_dict(cls, src: dict):
+    #     clsObj = cls("default")
+    #     for k, v in src.items():
+    #         if type(v) is dict:
+    #             setattr(clsObj, k, Property.from_dict(v))
+    #         else: 
+    #             setattr(clsObj, k, v)
+    #     return clsObj
+
+    def __init__(self, 
+                 _name: str, 
+                 _text: str = "",
+                 fontPath: str = "basic/4x6.bdf", 
+                 textColor: str = "#ffffff",
+                 x: str = "0", y: str = "0"):
+        '''
+        Parameters
+        ----------
+        _name: str
+            Element name - must be unique among sibling Elements
+        text: str
+            Text content of element
+        fontPath: str
+            Path of .bdf font file, relative to FONTS_PATH
+        textColor: str
+            Color of text, in hex format (with #), or as CSS3 color name
+        x: int
+            X-coordinate of bottom-left of text)
+        y: int
+            Y-coordinate of bottom-left of text)
+        '''
+
+        super().__init__(_name)
+        self.text = Property(_text, str)
+        self.font = Property(fontPath, str, "s", 
+                             [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
+        self.color = Property("", str)
+        if textColor.startswith("#"):
+            self.color.value = webcolors.hex_to_rgb(textColor)
+        else: 
+            self.color.value = webcolors.name_to_rgb(textColor)
+        # self.color = Property(textColor, str)
+        self.pos = Property((int(x),int(y)), (int, int), "n2")
+
+    def draw(self, canvas: FrameCanvas):
+        font = graphics.Font()
+        font.LoadFont(FONTS_PATH + self.font.value)
+        print("Font")
+        color = graphics.Color(*self.color.value)
+        print("Color")
+        graphics.DrawText(canvas, 
+                          font,
+                          self.pos.value[0], self.pos.value[1], 
+                          color,
+                          self.text.value)
+        print("Draw")
+    
+    def draw_code(self) -> str:
+        return (f"    # TextElement '{self.name.value}'\n"
+                f"    #   Text: {self.text.value}\n"
+                f"    #   Font: {self.font.value}\n"
+                f"    #   Color: {self.color.value}\n"
+                f"    #   Pos: {self.pos.value}\n"
+                f"    graphics.DrawText(canvas,\n"
+                f"        graphics.Font().LoadFont({FONTS_PATH + self.font.value}),\n"
+                f"        {self.pos.value[0]}, {self.pos.value[1]},\n"
+                f"        graphics.Color({self.color.value}),\n"
+                f"        {self.text.value})\n")
 
     def json(self):
         return self.__dict__
