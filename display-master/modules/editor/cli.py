@@ -35,7 +35,31 @@ ELEMENT_TYPES = {"icon": Elements.IconElement,
 ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
 def parse(line: str) -> tuple:
     'Convert space-delimited arguments to tuple of strings'
-    args = tuple(line.split())
+    argsList = line.split()
+
+    # Quotation checking
+    needCloseQuote = False
+    listLen = len(argsList)
+    i=0
+    while i < listLen:
+        # Check for starting quotations
+        if argsList[i].startswith("\""):
+            needCloseQuote = True
+            for j in range(i, len(argsList)):
+                # Check for end quotations
+                if argsList[j].endswith("\""):
+                    for k in range(i+1,j+1):
+                        argsList[i] += f" {argsList[i+1]}"
+                        del argsList[i+1]
+                    needCloseQuote = False
+                    listLen = len(argsList)
+        i += 1
+
+    if needCloseQuote: 
+        print ("ERROR: no close quotation found")
+        return tuple()
+
+    args = tuple(argsList)
     log.debug(args)
     return args
 

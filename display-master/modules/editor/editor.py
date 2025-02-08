@@ -243,7 +243,7 @@ class ModuleEditor(cmd.Cmd):
         minargs = 3
         if len(args) < minargs: 
             print("Not enough arguments.")
-            self.do_help("add")
+            self.do_help("set")
             return
         if type(args[0]) is not str:
             print("Object name must be string!")
