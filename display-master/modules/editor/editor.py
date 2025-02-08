@@ -40,7 +40,14 @@ class ModuleEditor(cmd.Cmd):
         if not os.path.isdir(parentDir): 
             os.mkdir(parentDir)
 
-        (compName,) = parse(line)
+        # Parse & check number of arguments
+        args = parse(line)
+        if not args: 
+            # Print docs if no arguments given
+            self.do_help("new")
+            return
+        
+        (compName,) = args
         if not re.match("^[A-Za-z0-9_]*$", compName):
             print("Invalid name.")
             print("Comp names must only contain alphanumeric characters and underscores.")
@@ -80,10 +87,9 @@ class ModuleEditor(cmd.Cmd):
         '''
 
         args = parse(line)
-
         if not args: 
             # Print docs if no arguments given
-            print(self.do_open.__doc__)
+            self.do_help("open")
             return
 
         if cli.working: 
@@ -234,6 +240,11 @@ class ModuleEditor(cmd.Cmd):
 
         args = parse(line)
         # Input validation
+        minargs = 3
+        if len(args) < minargs: 
+            print("Not enough arguments.")
+            self.do_help("add")
+            return
         if type(args[0]) is not str:
             print("Object name must be string!")
             return
@@ -321,7 +332,11 @@ class ModuleEditor(cmd.Cmd):
             print("Must have open composition!")
             return
 
+        # Parse & check arguments
         args = parse(line)
+        if not args: 
+            self.do_help("edit")
+            return
         
         # Find objects
         obj = None
@@ -356,8 +371,11 @@ class ModuleEditor(cmd.Cmd):
             Name of object produced by copy operation
             Convention must match that of `obj`'''
 
+        # Parse & check arguments
         args = parse(line)
-        if len(args) < 2:
+        minargs = 2
+        if len(args) < minargs:
+            print("Not enough arguments.")
             self.do_help("cp")
             return
 
@@ -511,7 +529,14 @@ class ModuleEditor(cmd.Cmd):
             cli.export_code(cli.working["name"], cli.working["elements"])
         else: 
             # Export comp name provided in argument
-            (compName,) = cli.parse(line)
+            # (compName,) = cli.parse(line)
+            # Parse & check args
+            args = parse(line)
+            if not args: 
+                self.do_help("export")
+                return
+            (compName,) = args
+
             # Check compName validity
             path = os.path.join(cli.SRC_PATH, compName + ".json")
             # LOG: path being checked
