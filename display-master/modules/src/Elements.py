@@ -389,6 +389,7 @@ class TextElement(MatrixElement):
         self.font = Property(fontPath, str, "s", 
                              [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
         self.color = Property("", str)
+        # Format color value
         if textColor.startswith("#"):
             self.color.value = webcolors.hex_to_rgb(textColor)
         else: 
@@ -400,6 +401,7 @@ class TextElement(MatrixElement):
         font = graphics.Font()
         font.LoadFont(FONTS_PATH + self.font.value)
         print("Font")
+        # Format color value
         color = graphics.Color(*self.color.value)
         print("Color")
         graphics.DrawText(canvas, 
@@ -415,11 +417,13 @@ class TextElement(MatrixElement):
                 f"    #   Font: {self.font.value}\n"
                 f"    #   Color: {self.color.value}\n"
                 f"    #   Pos: {self.pos.value}\n"
+                f"    myFont = graphics.Font()\n"
+                f"    myFont.LoadFont('{FONTS_PATH + self.font.value}')\n"
                 f"    graphics.DrawText(canvas,\n"
-                f"        graphics.Font().LoadFont({FONTS_PATH + self.font.value}),\n"
+                f"        myFont,\n"
                 f"        {self.pos.value[0]}, {self.pos.value[1]},\n"
-                f"        graphics.Color({self.color.value}),\n"
-                f"        {self.text.value})\n")
+                f"        graphics.Color{tuple(self.color.value)},\n"
+                f"        \"{self.text.value}\")\n")
 
     def json(self):
         return self.__dict__

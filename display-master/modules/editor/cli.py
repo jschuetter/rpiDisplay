@@ -154,9 +154,11 @@ def export_code(fileName: str, compElements: list):
     compElements: list of elements in composition to be exported 
         (will usually be working["elements"])'''
 
-    fcopy("./matrixBoilerplate.py", f"../{fileName}.py")
+    exportPath = f"../exports/{fileName}.py"
+
+    fcopy("./matrixBoilerplate.py", exportPath)
     # Copy boilerplate file and append element code
-    with open(f"../{fileName}.py", 'a') as codeFile: 
+    with open(exportPath, 'a') as codeFile: 
         for el in compElements: 
             codeFile.write(el.draw_code() + "\n")
         # Append final code
