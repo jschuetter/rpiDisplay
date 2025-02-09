@@ -27,7 +27,7 @@ def matrix_from_env() -> RGBMatrix:
     options.pwm_dither_bits = int(os.getenv("PWM_DITHER_BITS", 0))
     options.show_refresh_rate = int(os.getenv("SHOW_REFRESH", 0))
     options.limit_refresh_rate_hz = int(os.getenv("LIMIT_REFRESH", 0))
-    options.brightness = int(os.getenv("BRIGHTNESS", 100))
+    options.brightness = int(os.getenv("BRIGHTNESS", 90))
     if int(os.getenv("NO_HW_PULSE", 0)):
         options.disable_hardware_pulsing = True
     # Runtime options
