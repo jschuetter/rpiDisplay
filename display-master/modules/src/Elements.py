@@ -400,16 +400,18 @@ class TextElement(MatrixElement):
     def draw(self, canvas: FrameCanvas):
         font = graphics.Font()
         font.LoadFont(FONTS_PATH + self.font.value)
-        print("Font")
+
         # Format color value
+        if self.color.value.startswith("#"):
+            self.color.value = webcolors.hex_to_rgb(self.color.value)
+        elif not self.color.value.startswith("[") or not self.color.value.startswith("("): 
+            self.color.value = webcolors.name_to_rgb(self.color.value)
         color = graphics.Color(*self.color.value)
-        print("Color")
         graphics.DrawText(canvas, 
                           font,
                           self.pos.value[0], self.pos.value[1], 
                           color,
                           self.text.value)
-        print("Draw")
     
     def draw_code(self) -> str:
         return (f"    # TextElement '{self.name.value}'\n"
