@@ -57,6 +57,7 @@ def parse(line: str) -> tuple:
                     # Remove quotation mark
                     argsList[i] = argsList[i][:-1]
                     listLen = len(argsList)
+                    break
         i += 1
 
     if needCloseQuote: 
