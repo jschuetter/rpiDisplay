@@ -285,6 +285,12 @@ class ModuleEditor(cmd.Cmd):
                     # Add arg to list
                     argList.append(arg)
 
+                # Get requested value from cmd args
+                if len(argList) > 1:
+                    val = tuple(argList)
+                else:
+                    val = argList[0]
+
                 # Test for value in list of accepted values
                 if v.mode == "s" and val not in v.options:
                     print(f"Value {val} not in allowed values")
@@ -292,10 +298,6 @@ class ModuleEditor(cmd.Cmd):
                     return
                 
                 # Set property value
-                if len(argList) > 1:
-                    val = tuple(argList)
-                else:
-                    val = argList[0]
                 vars(el)[p]["value"] = val
                 print(f"Set {el.name.value}.{p} to {val}")
                 update_all()
