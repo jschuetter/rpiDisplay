@@ -389,12 +389,12 @@ class TextElement(MatrixElement):
         self.font = Property(fontPath, str, "s", 
                              [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
         self.color = Property("", str)
-        # Format color value
+        # test color value formatting
         if textColor.startswith("#"):
-            self.color.value = webcolors.hex_to_rgb(textColor)
+            webcolors.hex_to_rgb(textColor)
         else: 
-            self.color.value = webcolors.name_to_rgb(textColor)
-        # self.color = Property(textColor, str)
+            webcolors.name_to_rgb(textColor)
+        self.color = Property(textColor, str)
         self.pos = Property((int(x),int(y)), (int, int), "n2")
 
     def draw(self, canvas: FrameCanvas):
@@ -402,11 +402,19 @@ class TextElement(MatrixElement):
         font.LoadFont(FONTS_PATH + self.font.value)
 
         # Format color value
-        if self.color.value.startswith("#"):
-            self.color.value = webcolors.hex_to_rgb(self.color.value)
-        elif not self.color.value.startswith("[") or not self.color.value.startswith("("): 
-            self.color.value = webcolors.name_to_rgb(self.color.value)
-        color = graphics.Color(*self.color.value)
+        # try:
+        #     if self.color.value.startswith("#"):
+        #         colorRgb = webcolors.hex_to_rgb(self.color.value)
+        #     else:
+        #         colorRgb = webcolors.name_to_rgb(self.color.value)
+        # except ValueError as e:
+        #     print(e)
+        #     print("Color defaulted to white.")
+        #     self.color.value = "white"
+        #     colorRgb = webcolors.name_to_rgb(self.color.value)
+        colorRgb = colorFormat(self)
+
+        color = graphics.Color(*colorRgb)
         graphics.DrawText(canvas, 
                           font,
                           self.pos.value[0], self.pos.value[1], 
@@ -414,6 +422,7 @@ class TextElement(MatrixElement):
                           self.text.value)
     
     def draw_code(self) -> str:
+        colorRgb = colorFormat(self)
         return (f"    # TextElement '{self.name.value}'\n"
                 f"    #   Text: {self.text.value}\n"
                 f"    #   Font: {self.font.value}\n"
@@ -424,8 +433,25 @@ class TextElement(MatrixElement):
                 f"    graphics.DrawText(canvas,\n"
                 f"        myFont,\n"
                 f"        {self.pos.value[0]}, {self.pos.value[1]},\n"
-                f"        graphics.Color{tuple(self.color.value)},\n"
+                f"        graphics.Color(*{colorRgb}),\n"
                 f"        \"{self.text.value}\")\n")
 
     def json(self):
         return self.__dict__
+
+def colorFormat(obj) -> list: 
+    if type(obj.color.value) is list: 
+        return obj.color.value
+
+    try:
+        if obj.color.value.startswith("#"):
+            colorRgb = webcolors.hex_to_rgb(obj.color.value)
+        else:
+            colorRgb = webcolors.name_to_rgb(obj.color.value)
+    except ValueError as e:
+        print(e)
+        print("Color defaulted to white.")
+        obj.color.value = "white"
+        colorRgb = webcolors.name_to_rgb(obj.color.value)
+    
+    return list(colorRgb)
