@@ -45,6 +45,8 @@ def parse(line: str) -> tuple:
         # Check for starting quotations
         if argsList[i].startswith("\""):
             needCloseQuote = True
+            # Remove quotation mark
+            argsList[i] = argsList[i][1:]
             for j in range(i, len(argsList)):
                 # Check for end quotations
                 if argsList[j].endswith("\""):
@@ -52,6 +54,8 @@ def parse(line: str) -> tuple:
                         argsList[i] += f" {argsList[i+1]}"
                         del argsList[i+1]
                     needCloseQuote = False
+                    # Remove quotation mark
+                    argsList[i] = argsList[i][:-1]
                     listLen = len(argsList)
         i += 1
 
