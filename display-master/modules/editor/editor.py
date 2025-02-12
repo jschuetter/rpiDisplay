@@ -1,4 +1,12 @@
 #!/bin/python
+'''
+Editor Module
+Version 0.1
+Jacob Schuetter
+
+Module history: 
+v0.1: 12 Feb 2025
+'''
 # Insert project root directory into sys.path
 import sys
 sys.path.insert(0, "../..")

@@ -1,6 +1,13 @@
 #!/bin/python
+'''
+cli.py
+Helper code & methods for Editor module
+
+Last updated: 12 Feb 2025
+Jacob Schuetter
+'''
 # Insert project root directory into sys.path
-import sys
+import sys, os
 sys.path.insert(0, "../..")
 
 # RGB Matrix dependencies
@@ -166,4 +173,6 @@ def export_code(fileName: str, compElements: list):
                        "if __name__ == '__main__':\n"
                        "    main()")
         
+    # Update file permissions -- add write permission to group
+    os.chmod(exportPath, 0o664)
     print(f"Exported comp {fileName} as {fileName}.py")
