@@ -11,8 +11,8 @@ v2.0: 12 Feb 2025
 '''
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
-import datetime as dt
-import time
+from datetime import datetime as dt
+import time, pytz
 from config import FONTS_PATH
 
 # Logging
@@ -31,7 +31,7 @@ TIME_FORMAT_24 = "%H:%M:%S"
 TIME_FORMAT_12 = "%I:%M %p"
 
 MILITARY_TIME = True 
-TZ_EST = dt.timezone(dt.timedelta(hours=-4), name="EST")
+TZ_EST = pytz.timezone("US/Eastern")
 
 # Fonts
 TIME_FONT_PATH = FONTS_PATH+"basic/7x13B.bdf"
@@ -62,7 +62,7 @@ class BasicClock:
 
         # Update clock
         self.nextCanvas.Clear()
-        now = dt.datetime.now(tz=TZ_EST)
+        now = dt.now(tz=TZ_EST)
         # Draw date text, then time
         graphics.DrawText(self.nextCanvas, dateFont, DATE_X, DATE_Y, fontColor, 
                 now.strftime(DATE_FORMAT))
