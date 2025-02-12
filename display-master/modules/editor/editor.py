@@ -31,6 +31,11 @@ from warnings import warn
 from shutil import copy as fcopy
 from copy import deepcopy
 
+# Logger
+# N.B. logger used only for system logs. CLI messages made using `print`
+import logging
+log = logging.getLogger(__name__)
+
 class ModuleEditor(cmd.Cmd):
     intro = "Welcome to Jaybird's rgbmatrix Module Editor. Type help or ? to list commands.\n"
     prompt = "(ModuleEditor): "
@@ -83,7 +88,7 @@ class ModuleEditor(cmd.Cmd):
         cli.working["name"] = compName
         cli.working["path"] = path_
         cli.working["elements"] = []
-        print(cli.working)
+        log.debug(cli.working)
 
     def do_open(self, line):
         '''Open matrix composition JSON file
@@ -116,14 +121,14 @@ class ModuleEditor(cmd.Cmd):
                 # Else, get repeat confirmation request
 
         path = os.path.join(cli.SRC_PATH, args[0] + ".json")
-        print(path)
+        log.debug(path)
         if not os.path.isfile(path):
             print("First argument must be valid composition name")
             print("Use `ls` to see existing comps or `new` to create a comp")
             return
         
         # path = os.path.join(SRC_PATH, "tempName.json")
-        print(path)
+        log.debug(path)
         with open(path) as file:
             cli.working["name"] = args[0]
             cli.working["path"] = path
@@ -133,12 +138,12 @@ class ModuleEditor(cmd.Cmd):
             for k, v in jsonFile.items():
                 for props in v:
                     newEl = cli.ELEMENT_TYPES[k].from_dict(props)
-                    # print(newEl.__dict__)
+                    log.debug(newEl.__dict__)
                     cli.working["elements"].append(newEl)
             refresh_canvas()
 
     def complete_open(self, text, line, begidx, endidx):
-        # print(f"args: {text}, {line}, {begidx}, {endidx}")
+        log.debug(f"args: {text}, {line}, {begidx}, {endidx}")
         # Ignore after 1st argument
         if len(line.split()) + line.endswith(" ") > 2: 
             return []
