@@ -8,7 +8,7 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from dotenv import load_dotenv
 import os
 
-FONTS_PATH = "./fonts/"
+FONTS_PATH = "fonts/"
 
 def matrix_from_env() -> RGBMatrix:
     # Load environment vars, create options object

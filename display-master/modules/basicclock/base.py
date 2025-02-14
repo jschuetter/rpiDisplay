@@ -1,7 +1,7 @@
 #!/bin/python
 '''
 BasicClock module
-Version 2.0
+Version 2.1
 
 Module History: 
 v1.0: 19 Jun 2024

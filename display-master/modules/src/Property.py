@@ -13,6 +13,10 @@ from typing import Any, NewType
 
 # from rgbmatrix import FrameCanvas, graphics
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 class Property:
     '''Custom class for MatrixElement properties
 
@@ -21,8 +25,8 @@ class Property:
         - l (literal): assignable by literal value only
         - s (scrollable): can scroll through list of allowed values in editor
         - n (numeric): can use arrow keys to increment/decrement values
-        - n2 (numeric tuple): can use arrow keys (left/right, up/down) to 
-            increment/decrement each tuple value respectively
+        - n2 (numeric pair): can use arrow keys (left/right, up/down) to 
+            increment/decrement each pair value respectively
     '''
 
     allowedModes = ["l", "s", "n", "n2"]
@@ -30,13 +34,13 @@ class Property:
         "l":"literal",
         "s":"scrollable",
         "n":"numeric",
-        "n2":"numeric tuple"
+        "n2":"numeric pair"
     }
     modehints = {
         "l":"assignable by literal value only",
         "s":"scroll through allowed values using up/down arrows",
         "n":"numeric value; can be incremented/decremented using up/down arrows",
-        "n2":"tuple of numeric values; can be adjusted using (left/right, up/down) arrow keys"
+        "n2":"pair of numeric values; can be adjusted using (left/right, up/down) arrow keys"
     }
     typemap_str = {
         "str":str,
@@ -81,6 +85,9 @@ class Property:
             raise ValueError("Options list is required for scrollable mode.")
         self.options = opt
         if self.options and val not in self.options:
+            # log.debug(f"Attempted value: {val}")
+            print(f"Attempted value: {val}")
+            # log.debug(f"Allowed list: {self.options}")
             print(f"Allowed list: {self.options}")
             raise ValueError("Provided value not in allowed list.")
         self.value = val
@@ -88,11 +95,11 @@ class Property:
         #     raise ValueError("Type not in class typemap")
         # Convert type to tuple (for easier checking)
         if type(typ) in [tuple, list]:
-            typeTup = tuple([Property.typemap_cls[t] for t in typ])
+            typeTup = list([Property.typemap_cls[t] for t in typ])
         else:
             typeTup = (Property.typemap_cls[typ],)
-        # print(self.value)
-        # print(typeTup)
+        log.debug(self.value)
+        log.debug(typeTup)
         self.type_ = typeTup
 
     def __setitem__(self, key, value):

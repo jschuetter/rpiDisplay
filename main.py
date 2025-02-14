@@ -16,18 +16,21 @@ Current version contains command-line interface for calling existing modules fro
 from cmd import Cmd
 import subprocess, runpy, os, sys
 
+# Logger
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 # Add subfolders to sys.path
 CODE_PATH = "./display-master"
 for root, dirs, files in os.walk(CODE_PATH): 
     sys.path.append(root)
 import config
-
-# Logger
-import logging
-log = logging.getLogger(__name__)
+log.debug(sys.path)
 
 # Import modules
-from basicclock.BasicClock import BasicClock
+from basicclock.base import BasicClock
+from editor.base import Editor
 MODULES_PATH = "./display-master/modules"
 MODULES = {
     "basicclock": BasicClock,
@@ -50,10 +53,11 @@ class MyShell(Cmd):
     
     def do_run(self, arg):
         '''Run module by calling Python script'''
-        bc = BasicClock(matrix)
-        while True: 
-            bc.loop()
-            time.sleep(bc.delay)
+        # bc = BasicClock(matrix)
+        # while True: 
+        #     bc.loop()
+        #     time.sleep(bc.delay)
+        ed = Editor(matrix)
 
     
     def do_quit(self, arg):

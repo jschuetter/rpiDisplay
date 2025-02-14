@@ -92,7 +92,7 @@ class MatrixElement:
         self.name = Property(name_, str)
         self.group = []
         self.layer = Property(0, int, "n")
-        self.pos = Property((0,0), (int, int), "n2")
+        self.pos = Property([0,0], (int, int), "n2")
     
     def duplicate(self):
         return deepcopy(self)
@@ -169,7 +169,7 @@ class IconElement(MatrixElement):
 
         super().__init__(_name)
         self.path = Property(imgPath, str)
-        self.pos = Property((int(x),int(y)), (int, int), "n2")
+        self.pos = Property([int(x),int(y)], (int, int), "n2")
         # self.x = int(x)
         # self.y = int(y)
 
@@ -286,7 +286,7 @@ class TextElement(MatrixElement):
         else: 
             webcolors.name_to_rgb(textColor)
         self.color = Property(textColor, str)
-        self.pos = Property((int(x),int(y)), (int, int), "n2")
+        self.pos = Property([int(x),int(y)], (int, int), "n2")
 
     def draw(self, canvas: FrameCanvas):
         font = graphics.Font()
