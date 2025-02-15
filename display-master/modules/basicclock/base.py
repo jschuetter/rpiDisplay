@@ -48,6 +48,7 @@ fontColor = graphics.Color(*FONT_COLOR)
 class BasicClock: 
     # Define loop delay constant (in seconds)
     delay = 1
+    doloop = 1
 
 
     def __init__(self, matrix):
@@ -56,9 +57,9 @@ class BasicClock:
         self.nextCanvas = self.matrix.CreateFrameCanvas()
         log.debug(matrix)
         log.debug(self.matrix)
-
+        
     # Continuously run on loop
-    def loop(self):
+    def draw(self):
 
         # Update clock
         self.nextCanvas.Clear()
@@ -73,3 +74,6 @@ class BasicClock:
             graphics.DrawText(self.nextCanvas, timeFont, TIME_X-1, TIME_Y, fontColor, 
                 now.strftime(TIME_FORMAT_12))
         self.nextCanvas = self.matrix.SwapOnVSync(self.nextCanvas)
+
+    def loop(self):
+        self.draw()

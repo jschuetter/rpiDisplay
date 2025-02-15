@@ -82,6 +82,34 @@ def print_props(obj: Any):
         else: 
             print(f"{k}: {v}")
 
+
+# Export method
+# Define boilerplate code to follow class header in exported modules
+CLASS_BOILERPLATE_1 = """
+    # Define loop delay constant (in seconds)
+    doloop = config.DEF_DOLOOP
+    delay = config.DEF_DELAY
+
+    def __init__(self, matrix):
+        # Create cache canvas
+        self.matrix = matrix
+        self.canvas = self.matrix.CreateFrameCanvas()
+        log.debug(matrix)
+        log.debug(self.matrix)
+
+    # Initial frame draw
+    def draw(self):
+
+        # Element code here
+"""
+CLASS_BOILERPLATE_2 = """
+    # Code to refresh on every frame update
+    def loop(self): 
+        # Element code here
+"""
+# Number of tabs to insert before each line of element code
+TAB_LVL = "\t\t"
+
 def export_code(fileName: str, compElements: list):
     '''Exports current composition as Python code and writes to output file.
     N.B. all code used for exporting must use 4-space tabs (not 2-space or tab chars).
@@ -92,21 +120,36 @@ def export_code(fileName: str, compElements: list):
     compElements: list of elements in composition to be exported 
         (will usually be working["elements"])'''
 
-    exportPath = f"../exports/{fileName}.py"
+    BOILERPLATE_PATH = "display-master/modules/editor/matrixBoilerplate.py"
+    exportPath = f"display-master/modules/exports/{fileName}.py"
 
-    fcopy("./matrixBoilerplate.py", exportPath)
+    fcopy(BOILERPLATE_PATH, exportPath)
     # Copy boilerplate file and append element code
     with open(exportPath, 'a') as codeFile: 
+        # Write init code
+        for el in compElements: 
+            codeFile.write(el.init_code() + "\n")
+        codeFile.write("\n\n")
+        # Write class header
+        codeFile.write(f"class {fileName.capitalize()}:\n")
+        # Write class boilerplate
+        codeFile.write(CLASS_BOILERPLATE_1)
+        # Write draw method
         for el in compElements: 
             codeFile.write(el.draw_code() + "\n")
-        # Append final code
-        codeFile.write("    canvas = matrix.SwapOnVSync(canvas)\n\n"
-                    "if __name__ == '__main__':\n"
-                    "    main()")
+        codeFile.write("        self.matrix.SwapOnVSync(self.canvas)\n")
+        # Write loop method
+        codeFile.write(CLASS_BOILERPLATE_2)
+        for el in compElements: 
+            codeFile.write(el.loop_code() + "\n")
+        codeFile.write("        self.matrix.SwapOnVSync(self.canvas)\n")
+
         
     # Update file permissions -- add write permission to group
     os.chmod(exportPath, 0o664)
     print(f"Exported comp {fileName} as {fileName}.py")
+
+
 
 
 # Class definition

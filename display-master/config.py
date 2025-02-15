@@ -6,9 +6,11 @@ Updated 12 Feb 2025
 '''
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from dotenv import load_dotenv
-import os
+import os, webcolors
 
 FONTS_PATH = "fonts/"
+DEF_DELAY = 0.1 # Default delay between module frames
+DEF_DOLOOP = 1 # Default loop boolean (loop methods enabled by default)
 
 def matrix_from_env() -> RGBMatrix:
     # Load environment vars, create options object
@@ -46,3 +48,10 @@ def matrix_from_env() -> RGBMatrix:
     # Drop priv UID/GID?
 
     return RGBMatrix(options = options)
+
+def webcolor_to_rgb(color: str) -> tuple: 
+    if color.startswith("#"):
+        colorRgb = webcolors.hex_to_rgb(color)
+    else:
+        colorRgb = webcolors.name_to_rgb(color)
+    return tuple(colorRgb)

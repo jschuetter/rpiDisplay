@@ -36,16 +36,17 @@ import logging
 log = logging.getLogger(__name__)
 
 class Editor: 
+    doloop = 0
+    delay = 1
+
     def __init__(self, matrix): 
         self.matrix = matrix
         self.canvas = self.matrix.CreateFrameCanvas()
         self.medit = ModuleEditor(self.matrix, self.canvas)
-        
+        self.doloop = 0
+
+    def draw(self):
         self.medit.cmdloop()
-        # # Define global vars in cli
-        # cli.matrix = self.matrix
-        # cli.canvas = self.matrix.CreateFrameCanvas()
-        # ModuleEditor(self.matrix).cmdloop()
 
     def loop(self): 
         # Define loop method by convention; this one does nothing

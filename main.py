@@ -14,7 +14,7 @@ Current version contains command-line interface for calling existing modules fro
 '''
 
 from cmd import Cmd
-import subprocess, runpy, os, sys
+import os, sys, threading
 
 # Logger
 import logging
@@ -28,12 +28,17 @@ for root, dirs, files in os.walk(CODE_PATH):
 import config
 log.debug(sys.path)
 
+from ThreadLoop import ThreadLoop
+
 # Import modules
 from basicclock.base import BasicClock
 from editor.base import Editor
+# from comp import Comp
 MODULES_PATH = "./display-master/modules"
 MODULES = {
     "basicclock": BasicClock,
+    "editor": Editor
+    # "comp": Comp
 }
 
 # Other dependencies
@@ -41,6 +46,15 @@ import time
 
 # Define matrix from config file
 matrix = config.matrix_from_env()
+
+def clearMatrix():
+    'Basic helper method for clearing matrix after module stop'
+    blank = matrix.CreateFrameCanvas()
+    matrix.SwapOnVSync(blank)
+
+modRunning = False # Indicates whether a module is currently running
+keepRunning = False
+modThread = None
 
 class MyShell(Cmd):
     # Define the prompt for the shell
@@ -57,8 +71,43 @@ class MyShell(Cmd):
         # while True: 
         #     bc.loop()
         #     time.sleep(bc.delay)
-        ed = Editor(matrix)
+        # ed = Editor(matrix)
+        global modRunning, keepRunning, modThread
 
+        if not arg:
+            # Do nothing if no args provided
+            return
+        if modRunning: 
+            print("There is already a module running!")
+            return
+        
+        (modname,) = arg.split()
+        try:
+            mod = MODULES[modname](matrix)
+        except KeyError as e:
+            print(e)
+            return
+
+        mod.draw()
+
+        if mod.doloop:
+            modRunning = True
+            modThread = ThreadLoop(mod.delay, mod.loop)
+
+        # while mod.doloop: 
+        #     mod.loop()
+        #     time.sleep(mod.delay)
+
+    def do_stop(self, arg):
+        global modRunning, keepRunning, modThread
+        if modRunning:
+            # keepRunning = False
+            modThread.stop()
+            clearMatrix()
+            print("Module stopped.")
+            modRunning = False
+        else: 
+            return
     
     def do_quit(self, arg):
         '''Exit the shell.'''

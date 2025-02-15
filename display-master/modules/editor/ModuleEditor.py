@@ -587,8 +587,8 @@ class ModuleEditor(cmd.Cmd):
         Usage: exit'''
         print("Closing ModuleEditor...")
         self.do_close(None)
-        cli.canvas.Clear()
-        cli.matrix.SwapOnVSync(cli.canvas)
+        self.canvas.Clear()
+        self.matrix.SwapOnVSync(self.canvas)
         return True 
 
 
