@@ -6,11 +6,12 @@ Jacob Schuetter
 
 Project history: 
 - First commit: 19 Jun 2024
-- Last commit: 09 Feb 2025
+- Last commit: 15 Feb 2025
 
 This file: 
 Current version contains command-line interface for calling existing modules from project root directory
 - Created: 09 Feb 2025
+- Updated 15 Feb 2025
 '''
 
 from cmd import Cmd
@@ -53,7 +54,6 @@ def clearMatrix():
     matrix.SwapOnVSync(blank)
 
 modRunning = False # Indicates whether a module is currently running
-keepRunning = False
 modThread = None
 
 class MyShell(Cmd):
@@ -67,12 +67,7 @@ class MyShell(Cmd):
     
     def do_run(self, arg):
         '''Run module by calling Python script'''
-        # bc = BasicClock(matrix)
-        # while True: 
-        #     bc.loop()
-        #     time.sleep(bc.delay)
-        # ed = Editor(matrix)
-        global modRunning, keepRunning, modThread
+        global modRunning, modThread
 
         if not arg:
             # Do nothing if no args provided
@@ -99,9 +94,8 @@ class MyShell(Cmd):
         #     time.sleep(mod.delay)
 
     def do_stop(self, arg):
-        global modRunning, keepRunning, modThread
+        global modRunning, modThread
         if modRunning:
-            # keepRunning = False
             modThread.stop()
             clearMatrix()
             print("Module stopped.")
@@ -121,18 +115,6 @@ class MyShell(Cmd):
             "run": ["r"],
             "quit": ["exit"]
         }
-    
-    # A command for help in the shell
-    # def do_help(self, arg):
-    #     """List available commands."""
-    #     print("Available commands:")
-    #     print("  greet <name>  - Greets the user with the given name.")
-    #     print("  add <num1> <num2>  - Adds two numbers and prints the result.")
-    #     print("  quit  - Exits the shell.")
-    
-    # Optional: Override the default method for unknown commands
-    # def default(self, line):
-    #     print(f"Unknown command: {line}")
 
 # Main entry point for running the shell
 if __name__ == '__main__':

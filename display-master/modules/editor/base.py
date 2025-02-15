@@ -1,11 +1,13 @@
 #!/bin/python
 '''
 Editor Module
-Version 0.1
+Version 0.2
 Jacob Schuetter
 
 Module history: 
 v0.1: 12 Feb 2025
+v0.2: 15 Feb 2025
+- Moved cmdloop() call to draw() method (for consistency across modules)
 '''
 
 # RGB Matrix dependencies

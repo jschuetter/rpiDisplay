@@ -24,10 +24,6 @@ class ElementEditor(cmd.Cmd):
         value: Any (optional)
             New property value'''
 
-        # if not cli.working: 
-        #     print("Must have open composition!")
-        #     return
-
         args = parse(line)
         propName = None
         prop = None

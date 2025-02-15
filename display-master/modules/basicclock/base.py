@@ -1,13 +1,14 @@
 #!/bin/python
 '''
 BasicClock module
-Version 2.1
+Version 2.2
 
 Module History: 
 v1.0: 19 Jun 2024
 - Basic functionality
 v2.0: 12 Feb 2025
 - Port to "class" model for module handler
+- Renamed `loop` to `draw`, referred `loop` to `draw` (15 Feb)
 '''
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
@@ -57,7 +58,7 @@ class BasicClock:
         self.nextCanvas = self.matrix.CreateFrameCanvas()
         log.debug(matrix)
         log.debug(self.matrix)
-        
+
     # Continuously run on loop
     def draw(self):
 

@@ -2,7 +2,7 @@
 '''
 config.py
 Config options & settings for LED matrix and modules
-Updated 12 Feb 2025
+Updated 15 Feb 2025
 '''
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from dotenv import load_dotenv
