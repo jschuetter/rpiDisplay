@@ -23,6 +23,10 @@ from PIL import Image
 import webcolors
 from pathlib import Path
 
+# Tab levels for export strings
+METHOD_TAB = "        " # 2 levels
+INIT_TAB = "" # No indent
+
 class MatrixElement: 
     '''Parent class for all matrix elements
 
@@ -45,8 +49,12 @@ class MatrixElement:
     - __init__ [None]
     - duplicate [MatrixElement]: returns a deep copy of the element
     - draw(canvas) [None]: draws the element on the provided Canvas object
+    - loop(canvas) [None]: draws the element's coded next-frame on the provided Canvas object
+        Defaults to draw method
+    - init_code() [str]: returns Python code for instantiating variables used by this element
     - draw_code() [str]: returns Python code for drawing the element
-        Always returns at indent level 1
+    - loop_code() [str]: returns of Python code for updating/maintaining element on every frame refresh
+        Defaults to return same as draw_code()
     - json [dict]: returns element data as dict
     [Subclasses may also add methods if needed]
     '''
@@ -92,7 +100,7 @@ class MatrixElement:
         self.name = Property(name_, str)
         self.group = []
         self.layer = Property(0, int, "n")
-        self.pos = Property((0,0), (int, int), "n2")
+        self.pos = Property([0,0], (int, int), "n2")
     
     def duplicate(self):
         return deepcopy(self)
@@ -100,8 +108,17 @@ class MatrixElement:
     def draw(self, canvas: FrameCanvas):
         return None
     
-    def draw_code(self, canvas: FrameCanvas) -> str:
-        return None
+    def loop(self, canvas: FrameCanvas):
+        return self.draw(canvas)
+    
+    def init_code(self) -> str: 
+        return "" 
+
+    def draw_code(self) -> str:
+        return "pass"
+    
+    def loop_code(self) -> str:
+        return self.draw_code()
 
     def json(self) -> dict:
         return self.__dict__
@@ -169,23 +186,27 @@ class IconElement(MatrixElement):
 
         super().__init__(_name)
         self.path = Property(imgPath, str)
-        self.pos = Property((int(x),int(y)), (int, int), "n2")
-        # self.x = int(x)
-        # self.y = int(y)
+        self.pos = Property([int(x),int(y)], (int, int), "n2")
 
+        # Define init variable name
+        self._imgVarName = f"img_{self.name.value}"
+        
     def draw(self, canvas: FrameCanvas):
         img = Image.open(self.path.value)
         img = img.convert("RGB")
-        # print(self.pos.value)
         canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
+
+    def init_code(self) -> str:
+        imgVarname = f"img_{self.name.value}"
+        return (f"{INIT_TAB}# IconElement '{self.name.value}'\n"
+                f"{INIT_TAB}#   Path: {self.path.value}\n"
+                f"{INIT_TAB}#   Pos: {self.pos.value}\n"
+                f"{INIT_TAB}img_{self.name.value} = Image.open('{self.path.value}').convert('RGB')\n")
+                # f"{INIT_TAB}img_{self.name.value} = img.convert('RGB')\n")
     
     def draw_code(self) -> str:
-        return (f"    # IconElement '{self.name.value}'\n"
-                f"    #   Path: {self.path.value}\n"
-                f"    #   Pos: {self.pos.value}\n"
-                f"    img = Image.open('{self.path.value}')\n"
-                f"    img = img.convert('RGB')\n"
-                f"    canvas.SetImage(img, {self.pos.value[0]}, {self.pos.value[1]})\n")
+        return (
+                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value}, {self.pos.value[0]}, {self.pos.value[1]})\n")
 
     def json(self):
         return self.__dict__
@@ -286,46 +307,40 @@ class TextElement(MatrixElement):
         else: 
             webcolors.name_to_rgb(textColor)
         self.color = Property(textColor, str)
-        self.pos = Property((int(x),int(y)), (int, int), "n2")
+        self.pos = Property([int(x),int(y)], (int, int), "n2")
 
-    def draw(self, canvas: FrameCanvas):
-        font = graphics.Font()
-        font.LoadFont(FONTS_PATH + self.font.value)
+        # Define element var names
+        # self._fontVarName = f"font_{self.name.value}"
+        # self._colorVarName = f"color_{self.name.value}"
 
-        # Format color value
-        # try:
-        #     if self.color.value.startswith("#"):
-        #         colorRgb = webcolors.hex_to_rgb(self.color.value)
-        #     else:
-        #         colorRgb = webcolors.name_to_rgb(self.color.value)
-        # except ValueError as e:
-        #     print(e)
-        #     print("Color defaulted to white.")
-        #     self.color.value = "white"
-        #     colorRgb = webcolors.name_to_rgb(self.color.value)
+    def draw(self, canvas: FrameCanvas):# Prep vars for drawing
+        _font = graphics.Font()
+        _font.LoadFont(FONTS_PATH + self.font.value)
         colorRgb = colorFormat(self)
-
-        color = graphics.Color(*colorRgb)
+        _color = graphics.Color(*colorRgb)
         graphics.DrawText(canvas, 
-                          font,
+                          _font,
                           self.pos.value[0], self.pos.value[1], 
-                          color,
+                          _color,
                           self.text.value)
     
+    def init_code(self) -> str: 
+        return (f"{INIT_TAB}# TextElement '{self.name.value}'\n"
+                f"{INIT_TAB}#   Text: {self.text.value}\n"
+                f"{INIT_TAB}#   Font: {self.font.value}\n"
+                f"{INIT_TAB}#   Color: {self.color.value}\n"
+                f"{INIT_TAB}#   Pos: {self.pos.value}\n"
+                f"{INIT_TAB}font_{self.name.value} = graphics.Font()\n"
+                f"{INIT_TAB}font_{self.name.value}.LoadFont('{FONTS_PATH + self.font.value}')\n"
+                f"{INIT_TAB}color_{self.name.value} = graphics.Color(*config.webcolor_to_rgb('{self.color.value}'))\n")
+
     def draw_code(self) -> str:
         colorRgb = colorFormat(self)
-        return (f"    # TextElement '{self.name.value}'\n"
-                f"    #   Text: {self.text.value}\n"
-                f"    #   Font: {self.font.value}\n"
-                f"    #   Color: {self.color.value}\n"
-                f"    #   Pos: {self.pos.value}\n"
-                f"    myFont = graphics.Font()\n"
-                f"    myFont.LoadFont('{FONTS_PATH + self.font.value}')\n"
-                f"    graphics.DrawText(canvas,\n"
-                f"        myFont,\n"
-                f"        {self.pos.value[0]}, {self.pos.value[1]},\n"
-                f"        graphics.Color(*{colorRgb}),\n"
-                f"        \"{self.text.value}\")\n")
+        return (f"{METHOD_TAB}graphics.DrawText(self.canvas,\n"
+                f"{METHOD_TAB}    font_{self.name.value},\n"
+                f"{METHOD_TAB}    {self.pos.value[0]}, {self.pos.value[1]},\n"
+                f"{METHOD_TAB}    color_{self.name.value},\n"
+                f"{METHOD_TAB}    \"{self.text.value}\")\n")
 
     def json(self):
         return self.__dict__

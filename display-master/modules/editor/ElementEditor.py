@@ -2,14 +2,15 @@ import cmd
 from modules.src import Elements
 from modules.src.Elements import Property
 import cli
-from cli import parse, update_all
+from cli import parse
 import sys, tty, termios
 from copy import deepcopy
 
 class ElementEditor(cmd.Cmd):
-    def __init__(self, obj_):
+    def __init__(self, obj_, meditor_):
         super().__init__()
         self.obj = obj_
+        self.meditor = meditor_
         self.intro = f"Editing {obj_}:"
         self.prompt = f"{obj_.name.value}> "
 
@@ -22,10 +23,6 @@ class ElementEditor(cmd.Cmd):
             Name of property to modify
         value: Any (optional)
             New property value'''
-
-        if not cli.working: 
-            print("Must have open composition!")
-            return
 
         args = parse(line)
         propName = None
@@ -80,7 +77,7 @@ class ElementEditor(cmd.Cmd):
 
             # Set property value
             if len(argList) > 1:
-                val = tuple(argList)
+                val = list(argList)
             else:
                 val = argList[0]
 
@@ -93,7 +90,7 @@ class ElementEditor(cmd.Cmd):
             vars(self.obj)[p]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
             # Update JSON, canvas
-            update_all()
+            self.meditor.update_all()
             return
     
     def complete_set(self, text, line, begidx, endidx):
@@ -182,7 +179,7 @@ class ElementEditor(cmd.Cmd):
                     print(prop.options[scrollInd], end="\r")
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = prop.options[scrollInd]
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char in ('down', 's'):
                     scrollInd -= 1
                     if scrollInd <= -1:
@@ -190,12 +187,12 @@ class ElementEditor(cmd.Cmd):
                     print(prop.options[scrollInd], end="\r")
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = prop.options[scrollInd]
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char == '\x03':
                     # If Ctrl+C received, cancel input
                     print("Cancelling input", end = '\r\n')
                     vars(self.obj)[propName]["value"] = origValue
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                     return
                 
             # On return, set property value
@@ -205,12 +202,12 @@ class ElementEditor(cmd.Cmd):
 
             # Set property value
             if len(argList) > 1:
-                val = tuple(argList)
+                val = list(argList)
             else:
                 val = argList[0]
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
-            update_all()
+            self.meditor.update_all()
             return
                 
         elif prop.mode == "n":
@@ -226,18 +223,18 @@ class ElementEditor(cmd.Cmd):
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char in ('down', 's'):
                     val -= 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char == '\x03':
                     # If Ctrl+C received, cancel input
                     print("Cancelling input", end='\r\n')
                     vars(self.obj)[propName]["value"] = origValue
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                     return
                 
             # On return, set property value
@@ -246,12 +243,12 @@ class ElementEditor(cmd.Cmd):
 
             # Set property value
             if len(argList) > 1:
-                val = tuple(argList)
+                val = list(argList)
             else:
                 val = argList[0]
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
-            update_all()
+            self.meditor.update_all()
             return
             
         elif prop.mode == "n2":
@@ -265,30 +262,30 @@ class ElementEditor(cmd.Cmd):
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char in ('left', 'a'):
                     val[0] -= 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char in ('up', 'w'):
                     val[1] += 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char in ('down', 's'):
                     val[1] -= 1
                     print(val, end='\r')
                     # Update values, canvas
                     vars(self.obj)[propName]["value"] = val
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                 elif char == '\x03':
                     # If Ctrl+C received, cancel input
                     print("Cancelling input", end='\r\n')
                     vars(self.obj)[propName]["value"] = origValue
-                    update_all(do_reindex=False, do_write_json=False)
+                    self.meditor.update_all(do_reindex=False, do_write_json=False)
                     return
                 
             # On return, set property value
@@ -297,12 +294,12 @@ class ElementEditor(cmd.Cmd):
 
             # Set property value
             if len(argList) > 1:
-                val = tuple(argList)
+                val = list(argList)
             else:
                 val = argList[0]
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
-            update_all()
+            self.meditor.update_all()
             return
         
         elif prop.mode == "l":
