@@ -2,13 +2,19 @@
 '''
 config.py
 Config options & settings for LED matrix and modules
-Updated 15 Feb 2025
+Updated 16 Feb 2025
 '''
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from dotenv import load_dotenv
 import os, webcolors
 
 FONTS_PATH = "fonts/"
+
+# Address of default second terminal in VSCode remote environment
+# Not currently in use
+VSCODE_ALT_TERMINAL = "/dev/pts/2" 
+
+# Default module values
 DEF_DELAY = 0.1 # Default delay between module frames
 DEF_DOLOOP = 1 # Default loop boolean (loop methods enabled by default)
 

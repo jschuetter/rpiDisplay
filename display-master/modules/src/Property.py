@@ -15,7 +15,6 @@ from typing import Any, NewType
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 class Property:
     '''Custom class for MatrixElement properties
@@ -85,10 +84,8 @@ class Property:
             raise ValueError("Options list is required for scrollable mode.")
         self.options = opt
         if self.options and val not in self.options:
-            # log.debug(f"Attempted value: {val}")
-            print(f"Attempted value: {val}")
-            # log.debug(f"Allowed list: {self.options}")
-            print(f"Allowed list: {self.options}")
+            log.debug(f"Attempted value: {val}")
+            log.debug(f"Allowed list: {self.options}")
             raise ValueError("Provided value not in allowed list.")
         self.value = val
         # if typ not in Property.typemap_cls:

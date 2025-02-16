@@ -1,34 +1,44 @@
 #!/bin/python
 '''
 Raspberry Pi RGB Matrix Display Project
-Version 0.0.1
+Version 0.0.2
 Jacob Schuetter
 
 Project history: 
 - First commit: 19 Jun 2024
-- Last commit: 15 Feb 2025
+- Last commit: 16 Feb 2025
+v0.0.1: main.py created, handles running modules behind CLI "controller"; modules updated to class scheme
+v0.0.2: logging module implemented, to both alternate terminal ouptut and file output
 
 This file: 
 Current version contains command-line interface for calling existing modules from project root directory
 - Created: 09 Feb 2025
-- Updated 15 Feb 2025
+- Updated 16 Feb 2025
 '''
 
 from cmd import Cmd
 import os, sys, threading
-
-# Logger
-import logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Add subfolders to sys.path
 CODE_PATH = "./display-master"
 for root, dirs, files in os.walk(CODE_PATH): 
     sys.path.append(root)
 import config
-log.debug(sys.path)
 
+# Logger
+import logging
+logFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+logging.basicConfig(
+    level=logging.DEBUG,
+    # stream=sys.stdout,
+    # stream=logTerminal,
+    filename="output.log",
+    format=logFormat
+)
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
+# ThreadLoop helper class, to run modules behind main CLI
 from ThreadLoop import ThreadLoop
 
 # Import modules
@@ -59,7 +69,7 @@ modThread = None
 class MyShell(Cmd):
     # Define the prompt for the shell
     prompt = '> '
-    log.debug(os.getcwd())
+    log.info("Begin session")
     
     def do_about(self, arg):
         '''Give project information'''
@@ -105,7 +115,9 @@ class MyShell(Cmd):
     
     def do_quit(self, arg):
         '''Exit the shell.'''
-        print("Goodbye!")
+        print("Closing...")
+        # Close secondary logging terminal
+        log.info("End session.")
         return True  # Returning True ends the shell
 
     # Define aliases
