@@ -14,6 +14,9 @@ FONTS_PATH = "fonts/"
 # Not currently in use
 VSCODE_ALT_TERMINAL = "/dev/pts/2" 
 
+# Log file path
+LOG_FILE = "output.log"
+
 # Default module values
 DEF_DELAY = 0.1 # Default delay between module frames
 DEF_DOLOOP = 1 # Default loop boolean (loop methods enabled by default)

@@ -32,7 +32,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     # stream=sys.stdout,
     # stream=logTerminal,
-    filename="output.log",
+    filename=config.LOG_FILE,
     format=logFormat
 )
 log = logging.getLogger(__name__)
@@ -112,6 +112,16 @@ class MyShell(Cmd):
             modRunning = False
         else: 
             return
+
+    def do_clearLog(self, arg):
+        confirm = input("Are you sure? (y/n)")
+        if confirm in ["y", "yes"]:
+            with open(config.LOG_FILE, 'w'):
+                # Truncate file contents
+                pass
+            print(f"Cleared log file {config.LOG_FILE}")
+        else: 
+            print("Canceled.")
     
     def do_quit(self, arg):
         '''Exit the shell.'''
