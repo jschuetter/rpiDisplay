@@ -8,6 +8,8 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from dotenv import load_dotenv
 import os, webcolors
 
+#region constants
+
 FONTS_PATH = "fonts/"
 
 # Address of default second terminal in VSCode remote environment
@@ -20,6 +22,10 @@ LOG_FILE = "output.log"
 # Default module values
 DEF_DELAY = 0.1 # Default delay between module frames
 DEF_DOLOOP = 1 # Default loop boolean (loop methods enabled by default)
+
+#endregion
+
+#region methods
 
 def matrix_from_env() -> RGBMatrix:
     # Load environment vars, create options object
@@ -64,3 +70,5 @@ def webcolor_to_rgb(color: str) -> tuple:
     else:
         colorRgb = webcolors.name_to_rgb(color)
     return tuple(colorRgb)
+
+#endregion

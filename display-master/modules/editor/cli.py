@@ -3,19 +3,16 @@
 cli.py
 Helper code & methods for Editor module
 
-Last updated: 15 Feb 2025
+Last updated: 16 Feb 2025
 Jacob Schuetter
 '''
-# Insert project root directory into sys.path
-import sys, os
-sys.path.insert(0, "../..")
 
 # RGB self.matrix dependencies
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 import config 
 from config import FONTS_PATH
 
-import logging
+import os
 from warnings import warn
 import json
 from typing import Any
@@ -23,6 +20,7 @@ from shutil import copy as fcopy
 
 from modules.src import Elements
 
+import logging
 log = logging.getLogger(__name__)
 
 ELEMENT_TYPES = {"icon": Elements.IconElement, 

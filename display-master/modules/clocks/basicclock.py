@@ -19,7 +19,6 @@ from config import FONTS_PATH
 # Logging
 import logging
 log = logging.getLogger(__name__)
-# log.setLevel(logging.DEBUG)
 
 # Class constants
 DATE_X = 2

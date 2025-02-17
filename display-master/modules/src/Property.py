@@ -1,17 +1,11 @@
 #!/bin/python
+'''
+Property.py
+Definitions for Property class
+Updated: 16 Feb 2025
+'''
 
-# Import config module
-# import sys
-# sys.path.insert(0, "../..")
-
-# import config
-# from config import FONTS_PATH
-
-# from copy import deepcopy
 from typing import Any, NewType
-# import os, json
-
-# from rgbmatrix import FrameCanvas, graphics
 
 import logging
 log = logging.getLogger(__name__)

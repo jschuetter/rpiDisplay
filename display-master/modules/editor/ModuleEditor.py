@@ -8,11 +8,7 @@ import cmd
 from modules.src import Elements
 from ElementEditor import ElementEditor
 import cli
-# from cli import CliHelpers
-# import cli # Relevant global vars & methods
 from cli import parse, print_props
-#     # refresh_canvas, \
-#     write_json, print_props, update_all
 
 import os, re, json
 import logging
@@ -39,17 +35,7 @@ class ModuleEditor(cmd.Cmd):
         self.canvas = canvas
         self.working = {}
 
-    # Helper method for refreshing canvas
-    # def refresh_canvas():
-    #     if not self.working:
-    #         raise RuntimeError("Cannot draw without open composition")
-
-    #     self.canvas = self.matrix.CreateFrameCanvas()
-    #     for el in self.working["elements"]:
-    #         el.draw(self.canvas)
-    #     self.matrix.SwapOnVSync(self.canvas)
-    #     return
-
+    #region commands
     def do_new(self, line):
         '''Create new matrix composition
 
@@ -591,6 +577,7 @@ class ModuleEditor(cmd.Cmd):
         self.matrix.SwapOnVSync(self.canvas)
         return True 
 
+    #endregion
 
 
     #region Helper Methods

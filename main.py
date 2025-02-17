@@ -42,7 +42,7 @@ log.setLevel(logging.DEBUG)
 from ThreadLoop import ThreadLoop
 
 # Import modules
-from basicclock.base import BasicClock
+from clocks.basicclock import BasicClock
 from editor.base import Editor
 # from comp import Comp
 MODULES_PATH = "./display-master/modules"

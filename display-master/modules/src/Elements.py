@@ -1,9 +1,10 @@
 #!/bin/python
-# Import config module
-import sys
-sys.path.insert(0, "../..") # For config module
-sys.path.insert(1, "../src") # For modules in this folder
+'''
+Elements.py
+Definition of Element class
+'''
 
+# Import config module
 import config
 from config import FONTS_PATH
 
@@ -27,6 +28,7 @@ from pathlib import Path
 METHOD_TAB = "        " # 2 levels
 INIT_TAB = "" # No indent
 
+# Base class
 class MatrixElement: 
     '''Parent class for all matrix elements
 
@@ -123,7 +125,7 @@ class MatrixElement:
     def json(self) -> dict:
         return self.__dict__
 
-######## IMAGE ELEMENTS ########
+#region imageElements
 
 class IconElement(MatrixElement):
     '''Element for displaying static bitmap images
@@ -211,7 +213,9 @@ class IconElement(MatrixElement):
     def json(self):
         return self.__dict__
 
-######## TEXT ELEMENTS ########
+#endregion
+
+#region textElements
 
 class TextElement(MatrixElement):
     '''Element for displaying static text
@@ -344,3 +348,5 @@ class TextElement(MatrixElement):
 
     def json(self):
         return self.__dict__
+
+#endregion
