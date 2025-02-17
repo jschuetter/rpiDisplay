@@ -2,7 +2,6 @@
 '''
 Property.py
 Definitions for Property class
-Updated: 16 Feb 2025
 '''
 
 from typing import Any, NewType

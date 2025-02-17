@@ -15,6 +15,7 @@ import os, json
 from rgbmatrix import FrameCanvas, graphics
 
 from Property import Property
+from Param import Parameter
 from elementhelpers import *
 
 # Element dependencies
@@ -34,7 +35,7 @@ class MatrixElement:
 
     SCHEMA
     Class variables: 
-    - params [list]: list of params added using the `add_param` method
+    - params [list]: list of params added using the `Parameter` method
     - docstr [str]: class docstring
     Instance variables: 
     - Name [Property]: literal property containing name of element
@@ -61,7 +62,7 @@ class MatrixElement:
     [Subclasses may also add methods if needed]
     '''
 
-    params = [add_param("name", str, "Name of Element object (dev only).")]
+    params = [Parameter("name", str, "Name of Element object (dev only).")]
     docstr = "An element for use with an RGB LED matrix."
 
     @classmethod
@@ -132,10 +133,10 @@ class IconElement(MatrixElement):
     Requires .bmp filetype'''
 
     params = MatrixElement.params + [
-        add_param("path", str, "Relative path to the default icon for this object. " +
+        Parameter("path", str, "Relative path to the default icon for this object. " +
                   "Icon must be in .bmp format."),
-        add_param("x_pos", int, "X-coordinate of icon (top-left)."),
-        add_param("y_pos", int, "Y-coordinate of icon (top-left)")
+        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of icon (top-left)")
     ]
     docstr = "An icon in .bmp image format.\n\n" + \
         "Usage: add icon [name] [path] [x_pos] [y_pos]\n\n" + \
@@ -222,12 +223,12 @@ class TextElement(MatrixElement):
     Element size is determined by font and text content'''
 
     params = MatrixElement.params + [
-        add_param("font", str, f"Font file to use, relative to base fonts path. \
+        Parameter("font", str, f"Font file to use, relative to base fonts path. \
                   Fonts may be found at '{FONTS_PATH}'"),
-        add_param("textColor", str, "Hex value of font color to use (preceded by #). \
+        Parameter("textColor", str, "Hex value of font color to use (preceded by #). \
             Web color names may also be used. "),
-        add_param("x_pos", int, "X-coordinate of icon (top-left)."),
-        add_param("y_pos", int, "Y-coordinate of icon (top-left)")
+        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of icon (top-left)")
     ]
     docstr = "Static text.\n\n" + \
         "Usage: add text [name] [textContent] [font] [textColor] [x_pos] [y_pos]\n\n" + \

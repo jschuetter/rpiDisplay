@@ -174,15 +174,22 @@ class ModuleEditor(cmd.Cmd):
             return
 
         elType = args[0]
-        elArgs = args[1:]
-        invalidArgs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
-        if invalidArgs:
-            print(invalidArgs)
-            print(cli.ELEMENT_TYPES[elType].docstr)
-            return
-        if elArgs[0] in [el.name for el in self.working["elements"]]:
-            print("Name must be unique (all other args valid).")
-            return
+        # Take element type, then prompt for other arguments
+        elArgs = []
+        for pi in range(len(cli.ELEMENT_TYPES[elType].params)):
+            # Prompt for next parameter
+            curParam = cli.ELEMENT_TYPES[elType].params[pi]
+            elArgs.append(input(f"{curParam.name} ({str(curParam.type)}): "))
+
+        # elArgs = args[1:]
+        # invalidArgs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
+        # if invalidArgs:
+        #     print(invalidArgs)
+        #     print(cli.ELEMENT_TYPES[elType].docstr)
+        #     return
+        # if elArgs[0] in [el.name for el in self.working["elements"]]:
+        #     print("Name must be unique (all other args valid).")
+        #     return
         newEl = cli.ELEMENT_TYPES[elType](*elArgs)
 
         self.working["elements"].append(newEl)
@@ -275,7 +282,7 @@ class ModuleEditor(cmd.Cmd):
         for p, v in vars(el).items():
             if p == args[1]:
                 # Check types of provided values
-                argList = []
+                elArgs = []
                 for i in range(len(v.type_)):
                     t = Elements.Property.typemap_str[v.type_[i]]
                     try:
@@ -292,13 +299,13 @@ class ModuleEditor(cmd.Cmd):
                         f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
                         return
                     # Add arg to list
-                    argList.append(arg)
+                    elArgs.append(arg)
 
                 # Get requested value from cmd args
-                if len(argList) > 1:
-                    val = tuple(argList)
+                if len(elArgs) > 1:
+                    val = tuple(elArgs)
                 else:
-                    val = argList[0]
+                    val = elArgs[0]
 
                 # Test for value in list of accepted values
                 if v.mode == "s" and val not in v.options:
