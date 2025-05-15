@@ -317,8 +317,7 @@ class TextElement(MatrixElement):
         except ValueError as ve: 
             self.font = Property(self.default_font, str, "s", 
                              [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
-            log.warning("Invalid font name. Set to default.")
-            log.warning(ve)
+            log.warning(f"Font name invalid; set to default. ({ve})")
         self.color = Property("", str)
         # test color value formatting
         try: 
@@ -329,8 +328,7 @@ class TextElement(MatrixElement):
             self.color = Property(textColor, str)
         except ValueError as ve: 
             self.color = Property(self.default_color, str)
-            log.warning("Invalid color. Set to default.")
-            log.warning(ve)
+            log.warning(f"Color invalid; set to default. ({ve})")
         self.pos = Property([int(x),int(y)], (int, int), "n2")
 
         # Define element var names

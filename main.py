@@ -28,15 +28,33 @@ import config
 # Logger
 import logging
 logFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-logging.basicConfig(
-    level=logging.DEBUG,
-    # stream=sys.stdout,
-    # stream=logTerminal,
-    filename=config.LOG_FILE,
-    format=logFormat
-)
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     # stream=sys.stdout,
+#     # stream=logTerminal,
+#     filename=config.LOG_FILE,
+#     format=logFormat
+# )
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+# Set up handlers for log -- log all to file; 
+#   output WARN and above to stdout
+
+# File handler (logs everything)
+file_handler = logging.FileHandler(config.LOG_FILE)
+file_handler.setLevel(logging.DEBUG)
+file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(file_formatter)
+
+# Stream handler for stdout (only WARNING and above)
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.WARNING)
+stdout_formatter = logging.Formatter('%(levelname)s: %(message)s')
+stdout_handler.setFormatter(stdout_formatter)
+
+# Add both handlers to the logger
+log.addHandler(file_handler)
+log.addHandler(stdout_handler)
 
 # ThreadLoop helper class, to run modules behind main CLI
 from ThreadLoop import ThreadLoop
