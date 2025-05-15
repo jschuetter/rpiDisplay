@@ -194,7 +194,7 @@ class ModuleEditor(cmd.Cmd):
             newEl = cli.ELEMENT_TYPES[elType](*elArgs)
         except ValueError as ve: 
             # Handle ValueErrors non-fatally
-            log.warning(ve)
+            log.error(ve)
             return
 
         self.working["elements"].append(newEl)
