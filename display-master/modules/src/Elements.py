@@ -8,6 +8,9 @@ Definition of Element class
 import config
 from config import FONTS_PATH
 
+import logging
+log = logging.getLogger(__name__)
+
 from copy import deepcopy
 from typing import Any, NewType
 import os, json
@@ -223,11 +226,12 @@ class TextElement(MatrixElement):
     Element size is determined by font and text content'''
 
     params = MatrixElement.params + [
+        Parameter("text", str, "Text contents of element"),
         Parameter("font", str, f"Font file to use, relative to base fonts path. \
                   Fonts may be found at '{FONTS_PATH}'"),
         Parameter("textColor", str, "Hex value of font color to use (preceded by #). \
             Web color names may also be used. "),
-        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
+        Parameter("x_pos", int, "X-coordinate of icon (top-left)"),
         Parameter("y_pos", int, "Y-coordinate of icon (top-left)")
     ]
     docstr = "Static text.\n\n" + \
@@ -278,12 +282,16 @@ class TextElement(MatrixElement):
     #             setattr(clsObj, k, v)
     #     return clsObj
 
-    def __init__(self, 
+    default_font = "basic/4x6.bdf"
+    default_color = "#ffffff"
+    default_pos = "0"
+
+    def __init__(self,
                  _name: str, 
                  _text: str = "",
-                 fontPath: str = "basic/4x6.bdf", 
-                 textColor: str = "#ffffff",
-                 x: str = "0", y: str = "0"):
+                 fontPath: str = default_font, 
+                 textColor: str = default_color,
+                 x: str = default_pos, y: str = default_pos):
         '''
         Parameters
         ----------
@@ -303,15 +311,26 @@ class TextElement(MatrixElement):
 
         super().__init__(_name)
         self.text = Property(_text, str)
-        self.font = Property(fontPath, str, "s", 
+        try: 
+            self.font = Property(fontPath, str, "s", 
                              [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
+        except ValueError as ve: 
+            self.font = Property(self.default_font, str, "s", 
+                             [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
+            log.warning("Invalid font name. Set to default.")
+            log.warning(ve)
         self.color = Property("", str)
         # test color value formatting
-        if textColor.startswith("#"):
-            webcolors.hex_to_rgb(textColor)
-        else: 
-            webcolors.name_to_rgb(textColor)
-        self.color = Property(textColor, str)
+        try: 
+            if textColor.startswith("#"):
+                webcolors.hex_to_rgb(textColor)
+            else: 
+                webcolors.name_to_rgb(textColor)
+            self.color = Property(textColor, str)
+        except ValueError as ve: 
+            self.color = Property(self.default_color, str)
+            log.warning("Invalid color. Set to default.")
+            log.warning(ve)
         self.pos = Property([int(x),int(y)], (int, int), "n2")
 
         # Define element var names

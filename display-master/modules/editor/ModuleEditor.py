@@ -190,7 +190,12 @@ class ModuleEditor(cmd.Cmd):
         # if elArgs[0] in [el.name for el in self.working["elements"]]:
         #     print("Name must be unique (all other args valid).")
         #     return
-        newEl = cli.ELEMENT_TYPES[elType](*elArgs)
+        try: 
+            newEl = cli.ELEMENT_TYPES[elType](*elArgs)
+        except ValueError as ve: 
+            # Handle ValueErrors non-fatally
+            log.warning(ve)
+            return
 
         self.working["elements"].append(newEl)
         self.update_all()
