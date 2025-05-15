@@ -28,13 +28,13 @@ import config
 # Logger
 import logging
 logFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-# logging.basicConfig(
-#     level=logging.DEBUG,
-#     # stream=sys.stdout,
-#     # stream=logTerminal,
-#     filename=config.LOG_FILE,
-#     format=logFormat
-# )
+logging.basicConfig(
+    level=logging.DEBUG,
+    # stream=sys.stdout,
+    # stream=logTerminal,
+    filename=config.LOG_FILE,
+    format=logFormat
+)
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 # Set up handlers for log -- log all to file; 
