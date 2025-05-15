@@ -134,7 +134,7 @@ class ModuleEditor(cmd.Cmd):
             for k, v in jsonFile.items():
                 for props in v:
                     newEl = cli.ELEMENT_TYPES[k].from_dict(props)
-                    log.debug(newEl.__dict__)
+                    # log.debug(newEl.__dict__)
                     self.working["elements"].append(newEl)
             self.refresh_canvas()
 
@@ -191,11 +191,18 @@ class ModuleEditor(cmd.Cmd):
         #     print("Name must be unique (all other args valid).")
         #     return
         try: 
-            newEl = cli.ELEMENT_TYPES[elType](*elArgs)
-        except ValueError as ve: 
-            # Handle ValueErrors non-fatally
-            log.error(ve)
+            # Test arguments
+            argErrs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
+            if argErrs is None: 
+                newEl = cli.ELEMENT_TYPES[elType](*elArgs)
+            else:
+                log.error(argErrs)
+                return
+        except Exception as e: 
+            # Handle exceptions non-fatally
+            log.error(e)
             return
+        
 
         self.working["elements"].append(newEl)
         self.update_all()

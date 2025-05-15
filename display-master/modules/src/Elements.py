@@ -191,8 +191,8 @@ class IconElement(MatrixElement):
         '''
 
         super().__init__(_name)
-        if not os.path.isfile(imgPath): 
-            raise ValueError("Invalid path.")
+        # if not os.path.isfile(imgPath): 
+        #     raise ValueError("Invalid path.")
         self.path = Property(imgPath, str)
         self.pos = Property([int(x),int(y)], (int, int), "n2")
 
@@ -253,7 +253,6 @@ class TextElement(MatrixElement):
             return "Text content must be str."
         fontPath = FONTS_PATH + args[2]
         if not os.path.isfile(fontPath) or not fontPath.endswith(".bdf"): 
-            log.error(fontPath)
             return "Invalid font path."
         if args[3].startswith("#"):
             try: 
