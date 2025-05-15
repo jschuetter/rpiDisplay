@@ -103,7 +103,11 @@ class MyShell(Cmd):
         #     mod.loop()
         #     time.sleep(mod.delay)
 
+    # Alias do_run
+    do_r = do_run
+
     def do_stop(self, arg):
+        '''Stops a running module'''
         global modRunning, modThread
         if modRunning:
             modThread.stop()
@@ -114,6 +118,7 @@ class MyShell(Cmd):
             return
 
     def do_clearLog(self, arg):
+        '''Clear logging file output'''
         confirm = input("Are you sure? (y/n)")
         if confirm in ["y", "yes"]:
             with open(config.LOG_FILE, 'w'):
@@ -130,13 +135,14 @@ class MyShell(Cmd):
         log.info("End session.")
         return True  # Returning True ends the shell
 
-    # Define aliases
-    def get_names(self):
-        '''Define command aliases'''
-        return {
-            "run": ["r"],
-            "quit": ["exit"]
-        }
+    # Alias do_quit
+    do_exit = do_quit
+
+    # Hide aliases from help list
+    hidden_aliases = ["do_r", "do_exit"]
+
+    def get_names(self): 
+        return [n for n in dir(self.__class__) if n not in self.hidden_aliases]
 
 # Main entry point for running the shell
 if __name__ == '__main__':
