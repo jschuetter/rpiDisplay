@@ -172,6 +172,7 @@ class ElementEditor(cmd.Cmd):
             scrollInd = 0
             origValue = deepcopy(prop.value)
             for char in getch():
+                sys.stdout.write('\x1b[2K') # Clear line
                 if char in ('up', 'w'):
                     scrollInd += 1
                     if scrollInd >= len(prop.options): 
@@ -204,7 +205,7 @@ class ElementEditor(cmd.Cmd):
             if len(argList) > 1:
                 val = list(argList)
             else:
-                val = argList[0]
+                val = argList
             vars(self.obj)[propName]["value"] = val
             print(f"Set {self.obj.name.value}.{propName} to {val}")
             self.meditor.update_all()

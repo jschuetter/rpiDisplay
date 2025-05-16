@@ -240,6 +240,9 @@ class TextElement(MatrixElement):
         "Usage: add text [name] [textContent] [font] [textColor] [x_pos] [y_pos]\n\n" + \
             print_params(params)
     
+    # Valid font file extension
+    font_type = ".bdf"
+
     @classmethod
     def testArgs(cls, *args):
         '''Tests validity of arguments. 
@@ -252,9 +255,15 @@ class TextElement(MatrixElement):
         if not isinstance(args[1], str):
             return "Text content must be str."
         fontPath = FONTS_PATH + args[2]
-        if not os.path.isfile(fontPath) or not fontPath.endswith(".bdf"): 
+        # Font path may be empty (default set in __init__)
+        if args[2] != "": 
+            pass
+        elif not os.path.isfile(fontPath) or not fontPath.endswith(cls.font_type): 
             return "Invalid font path."
-        if args[3].startswith("#"):
+        # Color name may also be empty (default set in __init__)
+        if args[3] == "": 
+            pass
+        elif args[3].startswith("#"):
             try: 
                 webcolors.hex_to_rgb(args[3])
             except ValueError:
@@ -272,20 +281,13 @@ class TextElement(MatrixElement):
                 return "Position arguments must be int values"
         # Return None if all arguments are valid
         return None
-    
-    # @classmethod
-    # def from_dict(cls, src: dict):
-    #     clsObj = cls("default")
-    #     for k, v in src.items():
-    #         if type(v) is dict:
-    #             setattr(clsObj, k, Property.from_dict(v))
-    #         else: 
-    #             setattr(clsObj, k, v)
-    #     return clsObj
 
     default_font = "basic/4x6.bdf"
     default_color = "#ffffff"
     default_pos = "0"
+    @classmethod
+    def get_valid_fonts(cls): 
+        return [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob(f"*{cls.font_type}")]
 
     def __init__(self,
                  _name: str, 
@@ -302,8 +304,10 @@ class TextElement(MatrixElement):
             Text content of element
         fontPath: str
             Path of .bdf font file, relative to FONTS_PATH
+            Default value: YES
         textColor: str
             Color of text, in hex format (with #), or as CSS3 color name
+            Default value: YES
         x: int
             X-coordinate of bottom-left of text)
         y: int
@@ -312,12 +316,13 @@ class TextElement(MatrixElement):
 
         super().__init__(_name)
         self.text = Property(_text, str)
+        self.valid_fonts = self.get_valid_fonts()
         try: 
             self.font = Property(fontPath, str, "s", 
-                             [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
+                             self.valid_fonts)
         except ValueError as ve: 
             self.font = Property(self.default_font, str, "s", 
-                             [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob("*.bdf")])
+                             self.valid_fonts)
             log.warning(f"Font name invalid; set to default. ({ve})")
         self.color = Property("", str)
         # test color value formatting
