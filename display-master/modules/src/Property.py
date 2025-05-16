@@ -16,6 +16,7 @@ class Property:
     - Allowed Property modes: 
         - l (literal): assignable by literal value only
         - s (scrollable): can scroll through list of allowed values in editor
+            * N.B. may not be list or tuple data structure (to allow typechecking in ElementEditor)
         - n (numeric): can use arrow keys to increment/decrement values
         - n2 (numeric pair): can use arrow keys (left/right, up/down) to 
             increment/decrement each pair value respectively

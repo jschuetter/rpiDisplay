@@ -256,7 +256,7 @@ class TextElement(MatrixElement):
             return "Text content must be str."
         fontPath = FONTS_PATH + args[2]
         # Font path may be empty (default set in __init__)
-        if args[2] != "": 
+        if args[2] == "": 
             pass
         elif not os.path.isfile(fontPath) or not fontPath.endswith(cls.font_type): 
             return "Invalid font path."

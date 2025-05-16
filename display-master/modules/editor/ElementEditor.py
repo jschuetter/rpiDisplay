@@ -6,6 +6,11 @@ from cli import parse
 import sys, tty, termios
 from copy import deepcopy
 
+# Logger
+# N.B. logger used only for system logs. CLI messages made using `print`
+import logging
+log = logging.getLogger(__name__)
+
 class ElementEditor(cmd.Cmd):
     def __init__(self, obj_, meditor_):
         super().__init__()
@@ -197,7 +202,8 @@ class ElementEditor(cmd.Cmd):
                     return
                 
             # On return, set property value
-            valArgs = prop.options[scrollInd]
+            # Encapsulate value in list to allow proper typechecking 
+            valArgs = [prop.options[scrollInd],]
             # Value typechecking
             argList = _check_type(valArgs)
 
@@ -205,8 +211,9 @@ class ElementEditor(cmd.Cmd):
             if len(argList) > 1:
                 val = list(argList)
             else:
-                val = argList
+                val = argList[0]
             vars(self.obj)[propName]["value"] = val
+            log.debug(f"Set {propName} to {val}")
             print(f"Set {self.obj.name.value}.{propName} to {val}")
             self.meditor.update_all()
             return
