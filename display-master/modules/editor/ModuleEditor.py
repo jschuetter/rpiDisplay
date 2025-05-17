@@ -12,6 +12,7 @@ from cli import parse, print_props
 
 import os, re, json
 import logging
+import traceback
 from typing import Any
 from warnings import warn
 from shutil import copy as fcopy
@@ -201,6 +202,7 @@ class ModuleEditor(cmd.Cmd):
         except Exception as e: 
             # Handle exceptions non-fatally
             log.error(e)
+            log.debug(f"Traceback: {traceback.extract_tb(e.__traceback__)}")
             return
         
 

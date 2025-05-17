@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 from copy import deepcopy
 from typing import Any, NewType
 import os, json
-import Path
+from pathlib import Path
 
 from rgbmatrix import FrameCanvas, graphics
 
@@ -230,10 +230,10 @@ class TextElement(MatrixElement):
 
     params = MatrixElement.params + [
         Parameter("text", str, "Text contents of element"),
-        Parameter("font-family", str, f"Directory of fonts to use, relative to base fonts path. \
+        Parameter("font_family", str, f"Directory of fonts to use, relative to base fonts path. \
                     Fonts may be found at '{FONTS_PATH}'"),
         Parameter("font", str, f"Font file to use, relative to font family directory path. \
-                    Must exist in directory specified by `font-family`. \
+                    Must exist in directory specified by `font_family`. \
                     If no font is specified, one is chosen at runtime using `glob.glob`. \
                     Fonts may be found at '{FONTS_PATH}'"),
         Parameter("textColor", str, "Hex value of font color to use (preceded by #). \
@@ -261,18 +261,20 @@ class TextElement(MatrixElement):
         # Arg 1: text contents
         if not isinstance(args[1], str):
             return "Text content must be str."
-        # Arg 2: font-family
+        # Arg 2: font_family
         fontFamilyPath = FONTS_PATH + args[2]
         if not os.path.isdir(fontFamilyPath): 
             return "Invalid font family."
         # Arg 3: font path
-        fontPath = self.get_font_path()
+        fontPath = os.path.join(FONTS_PATH, args[2], args[3])
         # Font path may be empty (default set in __init__)
         if args[3] == "": 
             pass
-        elif not os.path.isfile(fontPath) 
+        elif (
+            not os.path.isfile(fontPath)
             or not fontPath.endswith(cls.font_type)
-            or not Path(fontPath).is_relative_to(Path(fontFamilyPath)): 
+            or not Path(fontPath).is_relative_to(Path(fontFamilyPath))
+            ): 
             return "Invalid font path."
         # Arg 4: color (name or hex)
         # Color name may also be empty (default set in __init__)
@@ -305,7 +307,7 @@ class TextElement(MatrixElement):
     @classmethod 
     def get_valid_font_families(cls): 
         return [str(d)[len(FONTS_PATH):] for d in os.listdir(FONTS_PATH)
-                    if os.isdir(os.path.join(FONTS_PATH, d))]
+                    if os.path.isdir(os.path.join(FONTS_PATH, d))]
     @classmethod
     def get_valid_fonts(cls, family): 
         fontFamilyPath = os.path.join(FONTS_PATH, family)
@@ -315,10 +317,10 @@ class TextElement(MatrixElement):
     # Helper methods for getting font information
     def get_font_path(self): 
         '''Returns path of selected font, relative to base fonts path'''
-        return os.path.join(FONTS_PATH, self.font-family, self.font)
+        return os.path.join(FONTS_PATH, self.font_family.value, self.font.value)
     def get_default_font(self): 
         '''Gets a valid font from the selected family'''
-        return self.get_valid_fonts(self.font-family)[0]
+        return self.get_valid_fonts(self.font_family.value)[0]
 
 
     def __init__(self,
@@ -356,15 +358,17 @@ class TextElement(MatrixElement):
         # Set font family - default if invalid
         self.valid_font_families = self.get_valid_font_families()
         try: 
-            self.font-family = Property(fontFamily, str, "s", 
+            self.font_family = Property(fontFamily, str, "s", 
                              self.valid_font_families)
         except ValueError as ve: 
-            self.font-family = Property(self.default_font_family, str, "s", 
+            self.font_family = Property(self.default_font_family, str, "s", 
                              self.valid_font_families)
             log.warning(f"Font family invalid; set to default. ({ve})")
 
+        log.debug("Font family good")
+
         # Set font within family - select automatically if invalid
-        self.valid_fonts = self.get_valid_fonts(self.font-family)
+        self.valid_fonts = self.get_valid_fonts(self.font_family.value)
         try: 
             self.font = Property(fontPath, str, "s", 
                              self.valid_fonts)
