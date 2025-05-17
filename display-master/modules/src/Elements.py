@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 from copy import deepcopy
 from typing import Any, NewType
 import os, json
+import Path
 
 from rgbmatrix import FrameCanvas, graphics
 
@@ -229,10 +230,14 @@ class TextElement(MatrixElement):
 
     params = MatrixElement.params + [
         Parameter("text", str, "Text contents of element"),
-        Parameter("font", str, f"Font file to use, relative to base fonts path. \
-                  Fonts may be found at '{FONTS_PATH}'"),
+        Parameter("font-family", str, f"Directory of fonts to use, relative to base fonts path. \
+                    Fonts may be found at '{FONTS_PATH}'"),
+        Parameter("font", str, f"Font file to use, relative to font family directory path. \
+                    Must exist in directory specified by `font-family`. \
+                    If no font is specified, one is chosen at runtime using `glob.glob`. \
+                    Fonts may be found at '{FONTS_PATH}'"),
         Parameter("textColor", str, "Hex value of font color to use (preceded by #). \
-            Web color names may also be used. "),
+                    Web color names may also be used. "),
         Parameter("x_pos", int, "X-coordinate of icon (top-left)"),
         Parameter("y_pos", int, "Y-coordinate of icon (top-left)")
     ]
@@ -250,31 +255,42 @@ class TextElement(MatrixElement):
         Returns None if valid.'''
         if len(args) < len(cls.params): 
             return "Incorrect number of args."
+        # Arg 0: element name
         if not isinstance(args[0], str):
             return "Invalid element name."
+        # Arg 1: text contents
         if not isinstance(args[1], str):
             return "Text content must be str."
-        fontPath = FONTS_PATH + args[2]
+        # Arg 2: font-family
+        fontFamilyPath = FONTS_PATH + args[2]
+        if not os.path.isdir(fontFamilyPath): 
+            return "Invalid font family."
+        # Arg 3: font path
+        fontPath = self.get_font_path()
         # Font path may be empty (default set in __init__)
-        if args[2] == "": 
-            pass
-        elif not os.path.isfile(fontPath) or not fontPath.endswith(cls.font_type): 
-            return "Invalid font path."
-        # Color name may also be empty (default set in __init__)
         if args[3] == "": 
             pass
-        elif args[3].startswith("#"):
+        elif not os.path.isfile(fontPath) 
+            or not fontPath.endswith(cls.font_type)
+            or not Path(fontPath).is_relative_to(Path(fontFamilyPath)): 
+            return "Invalid font path."
+        # Arg 4: color (name or hex)
+        # Color name may also be empty (default set in __init__)
+        if args[4] == "": 
+            pass
+        elif args[4].startswith("#"):
             try: 
-                webcolors.hex_to_rgb(args[3])
+                webcolors.hex_to_rgb(args[4])
             except ValueError:
                 return "Provided hex color is invalid."
         else: 
             try: 
-                webcolors.name_to_rgb(args[3])
+                webcolors.name_to_rgb(args[4])
             except ValueError: 
                 return "Color value must be in hex, beginning with #, or \
                 a valid CSS3 color name. "
-        for e in args[4:6]:
+        # Args 5 & 6: position
+        for e in args[5:7]:
             try:
                 int(e)
             except ValueError: 
@@ -282,16 +298,33 @@ class TextElement(MatrixElement):
         # Return None if all arguments are valid
         return None
 
+    default_font_family = "basic"
     default_font = "basic/4x6.bdf"
     default_color = "#ffffff"
     default_pos = "0"
+    @classmethod 
+    def get_valid_font_families(cls): 
+        return [str(d)[len(FONTS_PATH):] for d in os.listdir(FONTS_PATH)
+                    if os.isdir(os.path.join(FONTS_PATH, d))]
     @classmethod
-    def get_valid_fonts(cls): 
-        return [str(f)[len(FONTS_PATH):] for f in Path(FONTS_PATH).rglob(f"*{cls.font_type}")]
+    def get_valid_fonts(cls, family): 
+        fontFamilyPath = os.path.join(FONTS_PATH, family)
+        return [str(f)[len(fontFamilyPath):] for f 
+                    in Path(fontFamilyPath).rglob(f"*{cls.font_type}")]
+
+    # Helper methods for getting font information
+    def get_font_path(self): 
+        '''Returns path of selected font, relative to base fonts path'''
+        return os.path.join(FONTS_PATH, self.font-family, self.font)
+    def get_default_font(self): 
+        '''Gets a valid font from the selected family'''
+        return self.get_valid_fonts(self.font-family)[0]
+
 
     def __init__(self,
                  _name: str, 
                  _text: str = "",
+                 fontFamily: str = default_font_family,
                  fontPath: str = default_font, 
                  textColor: str = default_color,
                  x: str = default_pos, y: str = default_pos):
@@ -302,6 +335,9 @@ class TextElement(MatrixElement):
             Element name - must be unique among sibling Elements
         text: str
             Text content of element
+        fontFamily: str
+            Path of font directory, relative to FONTS_PATH
+            Default value: YES
         fontPath: str
             Path of .bdf font file, relative to FONTS_PATH
             Default value: YES
@@ -316,12 +352,28 @@ class TextElement(MatrixElement):
 
         super().__init__(_name)
         self.text = Property(_text, str)
-        self.valid_fonts = self.get_valid_fonts()
+
+        # Set font family - default if invalid
+        self.valid_font_families = self.get_valid_font_families()
+        try: 
+            self.font-family = Property(fontFamily, str, "s", 
+                             self.valid_font_families)
+        except ValueError as ve: 
+            self.font-family = Property(self.default_font_family, str, "s", 
+                             self.valid_font_families)
+            log.warning(f"Font family invalid; set to default. ({ve})")
+
+        # Set font within family - select automatically if invalid
+        self.valid_fonts = self.get_valid_fonts(self.font-family)
         try: 
             self.font = Property(fontPath, str, "s", 
                              self.valid_fonts)
+            # Raise exception if font path is not in font family
+            if self.fontPath not in self.valid_fonts: 
+                raise ValueError
         except ValueError as ve: 
-            self.font = Property(self.default_font, str, "s", 
+            # If font name is invalid, set font to first in valid list
+            self.font = Property(self.get_default_font(), str, "s", 
                              self.valid_fonts)
             log.warning(f"Font name invalid; set to default. ({ve})")
         self.color = Property("", str)
@@ -343,7 +395,7 @@ class TextElement(MatrixElement):
 
     def draw(self, canvas: FrameCanvas):# Prep vars for drawing
         _font = graphics.Font()
-        _font.LoadFont(FONTS_PATH + self.font.value)
+        _font.LoadFont(self.get_font_path())
         colorRgb = colorFormat(self)
         _color = graphics.Color(*colorRgb)
         graphics.DrawText(canvas, 
@@ -355,11 +407,11 @@ class TextElement(MatrixElement):
     def init_code(self) -> str: 
         return (f"{INIT_TAB}# TextElement '{self.name.value}'\n"
                 f"{INIT_TAB}#   Text: {self.text.value}\n"
-                f"{INIT_TAB}#   Font: {self.font.value}\n"
+                f"{INIT_TAB}#   Font: {self.get_font_path()}\n"
                 f"{INIT_TAB}#   Color: {self.color.value}\n"
                 f"{INIT_TAB}#   Pos: {self.pos.value}\n"
                 f"{INIT_TAB}font_{self.name.value} = graphics.Font()\n"
-                f"{INIT_TAB}font_{self.name.value}.LoadFont('{FONTS_PATH + self.font.value}')\n"
+                f"{INIT_TAB}font_{self.name.value}.LoadFont('{self.get_font_path()}')\n"
                 f"{INIT_TAB}color_{self.name.value} = graphics.Color(*config.webcolor_to_rgb('{self.color.value}'))\n")
 
     def draw_code(self) -> str:
