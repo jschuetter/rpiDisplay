@@ -325,7 +325,7 @@ class ElementEditor(cmd.Cmd):
         
         Usage: ls'''
 
-        print(*[prop for prop in vars(self.obj).keys()], sep="\t\t")
+        print(*[f"{prop}:\t{self.obj[prop]}" for prop in vars(self.obj).keys()], sep="\n")
         return
 
     def do_done(self, line):

@@ -301,26 +301,36 @@ class TextElement(MatrixElement):
         return None
 
     default_font_family = "basic"
-    default_font = "basic/4x6.bdf"
+    default_font = "4x6.bdf"
     default_color = "#ffffff"
     default_pos = "0"
     @classmethod 
     def get_valid_font_families(cls): 
-        return [str(d)[len(FONTS_PATH):] for d in os.listdir(FONTS_PATH)
+        return [str(d) for d in os.listdir(FONTS_PATH)
                     if os.path.isdir(os.path.join(FONTS_PATH, d))]
     @classmethod
     def get_valid_fonts(cls, family): 
         fontFamilyPath = os.path.join(FONTS_PATH, family)
-        return [str(f)[len(fontFamilyPath):] for f 
+        # Output files w/ prefixes cut off --
+        #   add 1 to length of path to ignore join symbol
+        return [str(f)[len(fontFamilyPath)+1:] for f 
                     in Path(fontFamilyPath).rglob(f"*{cls.font_type}")]
 
     # Helper methods for getting font information
     def get_font_path(self): 
         '''Returns path of selected font, relative to base fonts path'''
         return os.path.join(FONTS_PATH, self.font_family.value, self.font.value)
-    def get_default_font(self): 
-        '''Gets a valid font from the selected family'''
-        return self.get_valid_fonts(self.font_family.value)[0]
+    def refresh_font(self): 
+        '''Refreshes valid fonts & families lists & re-selects default font if needed.
+            Used for maintaining integrity while editing.
+            N.B. valid font families should not change unless 
+            file structure is altered during runtime (desired exception).'''
+        valid_fonts = self.get_valid_fonts(self.font_family.value)
+        if self.font.value not in valid_fonts: 
+            # Select new default font if needed
+            self.font = Property(valid_fonts[0], str, "s", valid_fonts)
+            log.debug(f"New default font selected ({self.get_font_path()})")
+
 
 
     def __init__(self,
@@ -356,30 +366,27 @@ class TextElement(MatrixElement):
         self.text = Property(_text, str)
 
         # Set font family - default if invalid
-        self.valid_font_families = self.get_valid_font_families()
+        valid_font_families = self.get_valid_font_families()
         try: 
             self.font_family = Property(fontFamily, str, "s", 
-                             self.valid_font_families)
+                             valid_font_families)
         except ValueError as ve: 
             self.font_family = Property(self.default_font_family, str, "s", 
-                             self.valid_font_families)
+                             valid_font_families)
             log.warning(f"Font family invalid; set to default. ({ve})")
 
-        log.debug("Font family good")
-
         # Set font within family - select automatically if invalid
-        self.valid_fonts = self.get_valid_fonts(self.font_family.value)
+        valid_fonts = self.get_valid_fonts(self.font_family.value)
         try: 
-            self.font = Property(fontPath, str, "s", 
-                             self.valid_fonts)
             # Raise exception if font path is not in font family
-            if self.fontPath not in self.valid_fonts: 
+            if fontPath not in valid_fonts: 
                 raise ValueError
+                
+            self.font = Property(fontPath, str, "s", valid_fonts)
         except ValueError as ve: 
             # If font name is invalid, set font to first in valid list
-            self.font = Property(self.get_default_font(), str, "s", 
-                             self.valid_fonts)
-            log.warning(f"Font name invalid; set to default. ({ve})")
+            self.font = Property(valid_fonts[0], str, "s", valid_fonts)
+            log.warning(f"Font name unspecified or invalid; set to default. ({ve})")
         self.color = Property("", str)
         # test color value formatting
         try: 
@@ -398,6 +405,8 @@ class TextElement(MatrixElement):
         # self._colorVarName = f"color_{self.name.value}"
 
     def draw(self, canvas: FrameCanvas):# Prep vars for drawing
+        # Refresh valid fonts & families; select new default font if needed
+        self.refresh_font()
         _font = graphics.Font()
         _font.LoadFont(self.get_font_path())
         colorRgb = colorFormat(self)
