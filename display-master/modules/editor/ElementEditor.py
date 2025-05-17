@@ -325,7 +325,12 @@ class ElementEditor(cmd.Cmd):
         
         Usage: ls'''
 
-        print(*[f"{prop}:\t{self.obj[prop]}" for prop in vars(self.obj).keys()], sep="\n")
+        for (prop, data) in vars(self.obj).items(): 
+            try: 
+                print(f"\t{prop}: {data.value}")
+            except AttributeError as ae: 
+                print(f"\t{prop}: {data}")
+                # log.warning(ae)
         return
 
     def do_done(self, line):
