@@ -11,6 +11,7 @@ import os, webcolors
 #region constants
 
 FONTS_PATH = "fonts/"
+EXPORT_PATH = "display-master/modules/exports/"
 
 # Address of default second terminal in VSCode remote environment
 # Not currently in use

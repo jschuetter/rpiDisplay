@@ -62,12 +62,12 @@ from ThreadLoop import ThreadLoop
 # Import modules
 from clocks.basicclock import BasicClock
 from editor.base import Editor
-# from comp import Comp
+# from fonttest import Fonttest
 MODULES_PATH = "./display-master/modules"
 MODULES = {
     "basicclock": BasicClock,
     "editor": Editor
-    # "comp": Comp
+    # "fonttest": Fonttest
 }
 
 # Other dependencies
