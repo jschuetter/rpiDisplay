@@ -633,10 +633,11 @@ class ModuleEditor(cmd.Cmd):
         if not self.working:
             raise RuntimeError("Cannot draw without open composition")
 
-        canvas = self.matrix.CreateFrameCanvas()
+        # canvas = self.matrix.CreateFrameCanvas()
+        self.canvas.Clear()
         for el in self.working["elements"]:
-            el.draw(canvas)
-        self.matrix.SwapOnVSync(canvas)
+            el.draw(self.canvas)
+        self.matrix.SwapOnVSync(self.canvas)
         return
 
     def sort_working(self):
