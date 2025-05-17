@@ -67,8 +67,8 @@ class ModuleEditor(cmd.Cmd):
         path_ = os.path.join(parentDir,compName + ".json")
         if os.path.exists(path_): 
             while True:
-                confirm = input("This path already exists! Do you want to over[w]rite, \
-                                [o]pen, or [c]ancel? (w/o/c)")
+                confirm = input("This path already exists!  Do you want to over[w]rite, "
+                                "[o]pen, or [c]ancel? (w/o/c)")
                 confirm = confirm.partition(" ")[0].lower()
                 if confirm in ["w", "overwrite", "write"]: 
                     break
