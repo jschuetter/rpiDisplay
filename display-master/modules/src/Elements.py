@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 from copy import deepcopy
 from typing import Any, NewType
-import os, json
+import os, json, math
 from pathlib import Path
 
 from rgbmatrix import FrameCanvas, graphics
@@ -211,6 +211,111 @@ class IconElement(MatrixElement):
                 f"{INIT_TAB}#   Path: {self.path.value}\n"
                 f"{INIT_TAB}#   Pos: {self.pos.value}\n"
                 f"{INIT_TAB}img_{self.name.value} = Image.open('{self.path.value}').convert('RGB')\n")
+                # f"{INIT_TAB}img_{self.name.value} = img.convert('RGB')\n")
+    
+    def draw_code(self) -> str:
+        return (
+                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value}, {self.pos.value[0]}, {self.pos.value[1]})\n")
+
+    def json(self):
+        return self.__dict__
+
+class ImageElement(MatrixElement):
+    '''Element for displaying static pixel-space images
+    Requires .jpg or .png filetype'''
+
+    params = MatrixElement.params + [
+        Parameter("path", str, "Relative path to the default icon for this object. " +
+                  "Icon must be in .bmp format."),
+        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of icon (top-left)"),
+        Parameter("width", int, "Pixel width of image")
+    ]
+    docstr = "An icon in .bmp image format.\n\n" + \
+        "Usage: add icon [name] [path] [x_pos] [y_pos]\n\n" + \
+            print_params(params)
+    
+    @classmethod
+    def testArgs(cls, *args):
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if type(args[0]) is not str: 
+            return "Invalid element name."
+        if not os.path.isfile(args[1]): 
+            return "Invalid image path."
+        # elif not args[1].endswith(".bmp"):
+        #     return "Image type must be .bmp (use Image class for pixel types)."
+        for e in args[2:5]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position arguments must be int values"
+        # Return None if all arguments are valid
+        return None
+    
+    # @classmethod
+    # def from_dict(cls, src: dict):
+    #     clsObj = cls("default")
+    #     for k, v in src.items():
+    #         if type(v) is dict:
+    #             setattr(clsObj, k, Property.from_dict(v))
+    #         else: 
+    #             setattr(clsObj, k, v)
+    #     return clsObj
+
+    def __init__(self, _name: str, imgPath: str = "", 
+                x: str = "0", y: str = "0", 
+                width: str = "32"):
+        '''
+        Parameters
+        ----------
+        _name: str
+            Element name - must be unique among sibling Elements
+        imgPath: str
+            Path of image file to show
+        x: int
+            X-coordinate of top-left of image
+        y: int
+            Y-coordinate of top-left of image
+        width: int
+            Width at which to display image
+            Height adjusted automatically based on aspect ratio (rounding up)
+            Defaults to 32 px
+        '''
+
+        super().__init__(_name)
+        # if not os.path.isfile(imgPath): 
+        #     raise ValueError("Invalid path.")
+        self.path = Property(imgPath, str)
+        for arg in (x,y): 
+            if arg == "": 
+                arg = "0"
+        self.pos = Property([int(x),int(y)], (int, int), "n2")
+        if width == "": 
+            width = "32"
+        self.width = Property(int(width), int, "n")
+        # self.height = None # Initialized on loading image for first time
+        
+    def draw(self, canvas: FrameCanvas):
+        img = Image.open(self.path.value)
+        # if not self.height: 
+        #     w, h = img.size
+        #     self.height = Property(math.ceil(self.width.value * (h/w)), int, "n")
+        img.thumbnail((self.width.value, self.width.value), Image.ANTIALIAS)
+        img = img.convert("RGB")
+        canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
+
+    def init_code(self) -> str:
+        imgVarname = f"img_{self.name.value}"
+        return (f"{INIT_TAB}# IconElement '{self.name.value}'\n"
+                f"{INIT_TAB}#   Path: {self.path.value}\n"
+                f"{INIT_TAB}#   Pos: {self.pos.value}\n"
+                f"{INIT_TAB}img_{self.name.value} = Image.open('{self.path.value}')"
+                f".thumbnail(({self.width.value}, {self.height.value}), Image.ANTIALIAS)"
+                f".convert('RGB')\n")
                 # f"{INIT_TAB}img_{self.name.value} = img.convert('RGB')\n")
     
     def draw_code(self) -> str:

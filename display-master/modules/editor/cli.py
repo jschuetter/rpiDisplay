@@ -24,10 +24,11 @@ import logging
 log = logging.getLogger(__name__)
 
 ELEMENT_TYPES = {"icon": Elements.IconElement, 
-        "image":None, 
+        "image":Elements.ImageElement, 
         "text": Elements.TextElement, 
         "rect":None, 
-        "ellipse":None
+        "ellipse":None,
+        "line":None
         }
 ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
 
