@@ -267,6 +267,113 @@ class RectElement(MatrixElement):
     def json(self):
         return self.__dict__
 
+class LineElement(MatrixElement):
+    '''Draws a line.'''
+
+    params = MatrixElement.params + [
+        Parameter("x_1", int, "X-coordinate of line start"),
+        Parameter("y_1", int, "Y-coordinate of line start"),
+        Parameter("x_2", int, "X-coordinate of line end"),
+        Parameter("y_2", int, "Y-coordinate of line end"),
+        Parameter("Color", int, "Hex value of fill color to use (preceded by #). \
+                    Web color names may also be used. "),
+    ]
+    docstr = "A line.\n\n" + \
+        "Usage: add line [name] [x_1] [y_1] [x_2] [y_2] [Color]\n\n" + \
+            print_params(params)
+    
+    @classmethod
+    def testArgs(cls, *args):
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if type(args[0]) is not str: 
+            return "Invalid element name."
+        for e in args[1:5]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position and dimension arguments must be int values"
+        # Color name may also be empty (default set in __init__)
+        if args[5] == "": 
+            pass
+        elif args[5].startswith("#"):
+            try: 
+                webcolors.hex_to_rgb(args[5])
+            except ValueError:
+                return "Provided hex color is invalid."
+        else: 
+            try: 
+                webcolors.name_to_rgb(args[5])
+            except ValueError: 
+                return "Color value must be in hex, beginning with #, or \
+                a valid CSS3 color name. "
+        # Return None if all arguments are valid
+        return None
+    
+    default_color = "#ffffff"
+    
+    def __init__(self, _name: str, x1: str, y1: str,
+                x2: str, y2: str, lineColor: str = "white"):
+        '''
+        Parameters
+        ----------
+        _name: str
+            Element name - must be unique among sibling Elements
+        x1: int
+            X-coordinate of start of line
+        y1: int
+            Y-coordinate of start of line
+        x2: int
+            X-coordinate of end of line
+        y2: int
+            Y-coordinate of end of line
+        lineColor: str
+            Stroke color of line in hex or webcolor name
+        '''
+
+        super().__init__(_name)
+        self.start = Property([int(x1),int(y1)], (int, int), "n2")
+        self.end = Property([int(x2),int(y2)], (int, int), "n2")
+        self.color = Property("", str)
+        try: 
+            if lineColor.startswith("#"):
+                webcolors.hex_to_rgb(lineColor)
+            else: 
+                webcolors.name_to_rgb(lineColor)
+            self.color = Property(lineColor, str)
+        except ValueError as ve: 
+            self.color = Property(self.default_color, str)
+            log.warning(f"Color invalid; set to default. ({ve})")
+
+    def draw(self, canvas: FrameCanvas):
+        colorRgb = colorFormat(self)
+        _color = graphics.Color(*colorRgb)
+        graphics.DrawLine(canvas, 
+                          self.start.value[0], self.start.value[1], 
+                          self.end.value[0], self.end.value[1], 
+                          _color)
+    
+
+    def init_code(self) -> str:
+        imgVarname = f"img_{self.name.value}"
+        return (f"{INIT_TAB}# LineElement '{self.name.value}'\n"
+                f"{INIT_TAB}#   Start: {self.start.value}\n"
+                f"{INIT_TAB}#   End: {self.end.value}\n"
+                f"{INIT_TAB}#   Stroke color: {self.color.value}\n"
+                f"{INIT_TAB}color_{self.name.value} = graphics.Color(*config.webcolor_to_rgb('{self.color.value}'))\n")
+    
+    def draw_code(self) -> str:
+        return (f"{METHOD_TAB}graphics.DrawLine(self.canvas,\n"
+                f"{METHOD_TAB}    {self.start.value[0]}, {self.start.value[1]},\n"
+                f"{METHOD_TAB}    {self.end.value[0]}, {self.end.value[1]},\n"
+                f"{METHOD_TAB}    color_{self.name.value},\n")
+                
+    def json(self):
+        return self.__dict__
+
 #endregion
 
 #region imageElements
