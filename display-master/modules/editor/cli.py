@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 ELEMENT_TYPES = {"icon": Elements.IconElement, 
         "image":Elements.ImageElement, 
         "text": Elements.TextElement, 
-        "rect":None, 
+        "rect":Elements.RectElement, 
         "ellipse":None,
         "line":None
         }
