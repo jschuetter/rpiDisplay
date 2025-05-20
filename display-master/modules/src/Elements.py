@@ -136,8 +136,8 @@ class RectElement(MatrixElement):
     '''Draws a rectangle.'''
 
     params = MatrixElement.params + [
-        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
-        Parameter("y_pos", int, "Y-coordinate of icon (top-left)"),
+        Parameter("x_pos", int, "X-coordinate of rect (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of rect (top-left)"),
         Parameter("width", int, "Rectangle width"),
         Parameter("height", int, "Rectangle height (px)"),
         Parameter("fill_color", int, "Hex value of fill color to use (preceded by #). \
@@ -146,7 +146,7 @@ class RectElement(MatrixElement):
                     Web color names may also be used. ")
     ]
     docstr = "A rectangle.\n\n" + \
-        "Usage: add icon [name] [x_pos] [y_pos] [width] [height] [fill_color] [stroke_color]\n\n" + \
+        "Usage: add rect [name] [x_pos] [y_pos] [width] [height] [fill_color] [stroke_color]\n\n" + \
             print_params(params)
     
     @classmethod
@@ -377,10 +377,10 @@ class EllipseElement(MatrixElement):
     '''Draws an ellipse.'''
 
     params = MatrixElement.params + [
-        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
-        Parameter("y_pos", int, "Y-coordinate of icon (top-left)"),
-        Parameter("width", int, "Rectangle width"),
-        Parameter("height", int, "Rectangle height (px)"),
+        Parameter("x_pos", int, "X-coordinate of ellipse (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of ellipse (top-left)"),
+        Parameter("width", int, "Ellipse width"),
+        Parameter("height", int, "Ellipse height (px)"),
         Parameter("fill_color", int, "Hex value of fill color to use (preceded by #). \
                     Web color names may also be used. "),
         Parameter("stroke_color", int, "Hex value of outline color to use (preceded by #). \
@@ -435,17 +435,17 @@ class EllipseElement(MatrixElement):
         _name: str
             Element name - must be unique among sibling Elements
         x: int
-            X-coordinate of top-left of rect
+            X-coordinate of top-left of ellipse
         y: int
-            Y-coordinate of top-left of rect
+            Y-coordinate of top-left of ellipse
         width: int
-            Width of rectangle in px
+            Width of ellipse in px
         height: int
-            Height of rectangle in px
+            Height of ellipse in px
         fillColor: str
-            Fill color of rectangle in hex or webcolor name
+            Fill color of ellipse in hex or webcolor name
         strokeColor: str
-            Stroke color of rectangle in hex or webcolor name
+            Stroke color of ellipse in hex or webcolor name
         '''
 
         super().__init__(_name)
@@ -502,6 +502,122 @@ class EllipseElement(MatrixElement):
     def draw_code(self) -> str:
         return (
                 f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value}, {self.pos.value[0]}, {self.pos.value[1]})\n")
+
+    def json(self):
+        return self.__dict__
+
+class CircleElement(MatrixElement):
+    '''Draws an circle.'''
+
+    params = MatrixElement.params + [
+        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of icon (top-left)"),
+        Parameter("radius", int, "Circle radius (px)"),
+        Parameter("color", int, "Hex value of fill color to use (preceded by #). \
+                    Web color names may also be used. ")
+    ]
+    docstr = "A circle.\n\n" + \
+        "Usage: add ellipse [name] [x_pos] [y_pos] [width] [height] [color]\n\n" + \
+            print_params(params)
+    
+    @classmethod
+    def testArgs(cls, *args):
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if type(args[0]) is not str: 
+            return "Invalid element name."
+        for e in args[1:4]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position and dimension arguments must be int values"
+        # Color name may also be empty (default set in __init__)
+        for arg in args[4:]:
+            if arg == "": 
+                pass
+            elif arg.startswith("#"):
+                try: 
+                    webcolors.hex_to_rgb(arg)
+                except ValueError:
+                    return "Provided hex color is invalid."
+            else: 
+                try: 
+                    webcolors.name_to_rgb(arg)
+                except ValueError: 
+                    return "Color value must be in hex, beginning with #, or \
+                    a valid CSS3 color name. "
+        # Return None if all arguments are valid
+        return None
+    
+    default_color = "#ffffff"
+    default_size = [10,10]
+    default_pos = [0,0]
+    
+    def __init__(self, _name: str, x: str = "0", y: str = "0",
+                rad: str = "10",
+                fillColor: str = "white", strokeColor: str = "white"):
+        '''
+        Parameters
+        ----------
+        _name: str
+            Element name - must be unique among sibling Elements
+        x: int
+            X-coordinate of top-left of circle
+        y: int
+            Y-coordinate of top-left of circle
+        rad: int
+            Radius of circle in px
+        fillColor: str
+            Fill color of circle in hex or webcolor name
+        '''
+
+        super().__init__(_name)
+        try: 
+            self.pos = Property([int(x),int(y)], (int, int), "n2")
+        except ValueError as ve: 
+            self.pos = Property(self.default_pos, (int, int), "n2")
+            log.warning(f"Position invalid; set to default. ({ve})")
+        try: 
+            self.radius = Property(int(rad), (int, int), "n2")
+        except ValueError as ve: 
+            self.size = Property(self.default_size, int, "n")
+            log.warning(f"Radius invalid; set to default. ({ve})")
+        self.color = Property("", str)
+        try: 
+            if fillColor.startswith("#"):
+                webcolors.hex_to_rgb(fillColor)
+            else: 
+                webcolors.name_to_rgb(fillColor)
+            self.color = Property(fillColor, str)
+        except ValueError as ve: 
+            self.color = Property(self.default_color, str)
+            log.warning(f"Color invalid; set to default. ({ve})")
+
+    def draw(self, canvas: FrameCanvas):
+        colorRgb = colorFormat(self)
+        _color = graphics.Color(*colorRgb)
+        graphics.DrawCircle(canvas, 
+                          self.pos.value[0], self.pos.value[1], 
+                          self.radius.value, 
+                          _color)
+
+    def init_code(self) -> str:
+        imgVarname = f"img_{self.name.value}"
+        return (f"{INIT_TAB}# CircleElement '{self.name.value}'\n"
+                f"{INIT_TAB}#   Pos: {self.pos.value}\n"
+                f"{INIT_TAB}#   Radius: {self.radius.value}\n"
+                f"{INIT_TAB}#   Fill color: {self.color.value}\n"
+                f"{INIT_TAB}color_{self.name.value} = graphics.Color(*config.webcolor_to_rgb('{self.color.value}'))\n")
+
+    
+    def draw_code(self) -> str:
+        return (f"{METHOD_TAB}graphics.DrawCircle(self.canvas,\n"
+                f"{METHOD_TAB}    {self.pos.value[0]}, {self.pos.value[1]},\n"
+                f"{METHOD_TAB}    {self.radius.value},\n"
+                f"{METHOD_TAB}    color_{self.name.value},\n")
 
     def json(self):
         return self.__dict__
