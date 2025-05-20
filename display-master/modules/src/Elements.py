@@ -315,8 +315,8 @@ class LineElement(MatrixElement):
     
     default_color = "#ffffff"
     
-    def __init__(self, _name: str, x1: str, y1: str,
-                x2: str, y2: str, lineColor: str = "white"):
+    def __init__(self, _name: str, x1: str = "0", y1: str = "0",
+                x2: str = "0", y2: str = "0", lineColor: str = "white"):
         '''
         Parameters
         ----------
@@ -370,9 +370,146 @@ class LineElement(MatrixElement):
                 f"{METHOD_TAB}    {self.start.value[0]}, {self.start.value[1]},\n"
                 f"{METHOD_TAB}    {self.end.value[0]}, {self.end.value[1]},\n"
                 f"{METHOD_TAB}    color_{self.name.value},\n")
-                
+
     def json(self):
         return self.__dict__
+
+
+class EllipseElement(MatrixElement):
+    '''Draws an ellipse.'''
+
+    params = MatrixElement.params + [
+        Parameter("x_pos", int, "X-coordinate of icon (top-left)."),
+        Parameter("y_pos", int, "Y-coordinate of icon (top-left)"),
+        Parameter("width", int, "Rectangle width"),
+        Parameter("height", int, "Rectangle height (px)"),
+        Parameter("fill_color", int, "Hex value of fill color to use (preceded by #). \
+                    Web color names may also be used. "),
+        Parameter("stroke_color", int, "Hex value of outline color to use (preceded by #). \
+                    Web color names may also be used. ")
+    ]
+    docstr = "An ellipse.\n\n" + \
+        "Usage: add ellipse [name] [x_pos] [y_pos] [width] [height] [fill_color] [stroke_color]\n\n" + \
+            print_params(params)
+    
+    @classmethod
+    def testArgs(cls, *args):
+        '''Tests validity of arguments. 
+        Returns string response if invalid args. 
+        Returns None if valid.'''
+        if len(args) < len(cls.params): 
+            return "Incorrect number of args."
+        if type(args[0]) is not str: 
+            return "Invalid element name."
+        for e in args[1:5]:
+            try:
+                int(e)
+            except ValueError: 
+                return "Position and dimension arguments must be int values"
+        # Color name may also be empty (default set in __init__)
+        for arg in args[5:]:
+            if arg == "": 
+                pass
+            elif arg.startswith("#"):
+                try: 
+                    webcolors.hex_to_rgb(arg)
+                except ValueError:
+                    return "Provided hex color is invalid."
+            else: 
+                try: 
+                    webcolors.name_to_rgb(arg)
+                except ValueError: 
+                    return "Color value must be in hex, beginning with #, or \
+                    a valid CSS3 color name. "
+        # Return None if all arguments are valid
+        return None
+    
+    default_color = "#ffffff"
+    default_size = [10,10]
+    default_pos = [0,0]
+    
+    def __init__(self, _name: str, x: str = "0", y: str = "0",
+                width: str = "10", height: str = "10",
+                fillColor: str = "white", strokeColor: str = "white"):
+        '''
+        Parameters
+        ----------
+        _name: str
+            Element name - must be unique among sibling Elements
+        x: int
+            X-coordinate of top-left of rect
+        y: int
+            Y-coordinate of top-left of rect
+        width: int
+            Width of rectangle in px
+        height: int
+            Height of rectangle in px
+        fillColor: str
+            Fill color of rectangle in hex or webcolor name
+        strokeColor: str
+            Stroke color of rectangle in hex or webcolor name
+        '''
+
+        super().__init__(_name)
+        try: 
+            self.pos = Property([int(x),int(y)], (int, int), "n2")
+        except ValueError as ve: 
+            self.pos = Property(self.default_pos, (int, int), "n2")
+            log.warning(f"Position invalid; set to default. ({ve})")
+        try: 
+            self.size = Property([int(width),int(height)], (int, int), "n2")
+        except ValueError as ve: 
+            self.size = Property(self.default_size, (int, int), "n2")
+            log.warning(f"Position invalid; set to default. ({ve})")
+        self.fill_color = Property("", str)
+        try: 
+            if fillColor.startswith("#"):
+                webcolors.hex_to_rgb(fillColor)
+            else: 
+                webcolors.name_to_rgb(fillColor)
+            self.fill_color = Property(fillColor, str)
+        except ValueError as ve: 
+            self.fill_color = Property(self.default_color, str)
+            log.warning(f"Color invalid; set to default. ({ve})")
+
+        self.stroke_color = Property("", str)
+        try: 
+            if strokeColor.startswith("#"):
+                webcolors.hex_to_rgb(strokeColor)
+            else: 
+                webcolors.name_to_rgb(strokeColor)
+            self.stroke_color = Property(strokeColor, str)
+        except ValueError as ve: 
+            self.stroke_color = Property(self.default_color, str)
+            log.warning(f"Color invalid; set to default. ({ve})")
+        
+    def draw(self, canvas: FrameCanvas):
+        img = Image.new("RGB", (canvas.width, canvas.height))
+        draw = ImageDraw.Draw(img)
+        draw.ellipse((self.pos.value[0], self.pos.value[1], 
+                        self.pos.value[0] + self.size.value[0], 
+                        self.pos.value[1] + self.size.value[1]),
+                        fill=self.fill_color.value, outline=self.stroke_color.value)
+        canvas.SetImage(img)
+
+    def init_code(self) -> str:
+        imgVarname = f"img_{self.name.value}"
+        return (f"{INIT_TAB}# EllipseElement '{self.name.value}'\n"
+                f"{INIT_TAB}#   Pos: {self.pos.value}\n"
+                f"{INIT_TAB}#   Size: {self.size.value}\n"
+                f"{INIT_TAB}#   Fill color: {self.fill_color.value}\n"
+                f"{INIT_TAB}#   Stroke color: {self.stroke_color.value}\n"
+                f"{INIT_TAB}img_{self.name.value} = Image.new('RGB', (self.canvas.width, self.canvas.height))\n"
+                f"{INIT_TAB}draw_{self.name.value} = ImageDraw.Draw(img_{self.name.value})\n"
+                f"{INIT_TAB}draw_{self.name.value}.ellipse(({self.pos.value[0]}, {self.pos.value[1]}, {self.pos.value[0] + self.size.value[0]}, {self.pos.value[1] + self.size.value[1]}), fill={self.fill_color.value}, outline={self.stroke_color.value})\n")
+    
+    def draw_code(self) -> str:
+        return (
+                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value})\n")
+
+    def json(self):
+        return self.__dict__
+
 
 #endregion
 

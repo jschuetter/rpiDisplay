@@ -27,7 +27,7 @@ ELEMENT_TYPES = {"icon": Elements.IconElement,
         "image":Elements.ImageElement, 
         "text": Elements.TextElement, 
         "rect":Elements.RectElement, 
-        "ellipse":None,
+        "ellipse":Elements.EllipseElement,
         "line":Elements.LineElement
         }
 ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
