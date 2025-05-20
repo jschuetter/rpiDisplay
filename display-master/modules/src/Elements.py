@@ -241,13 +241,11 @@ class RectElement(MatrixElement):
             log.warning(f"Color invalid; set to default. ({ve})")
         
     def draw(self, canvas: FrameCanvas):
-        img = Image.new("RGB", (canvas.width, canvas.height))
+        img = Image.new("RGB", (self.size.value[0] + 1, self.size.value[1] + 1))
         draw = ImageDraw.Draw(img)
-        draw.rectangle((self.pos.value[0], self.pos.value[1], 
-                        self.pos.value[0] + self.size.value[0], 
-                        self.pos.value[1] + self.size.value[1]),
+        draw.rectangle((0, 0, self.size.value[0], self.size.value[1]),
                         fill=self.fill_color.value, outline=self.stroke_color.value)
-        canvas.SetImage(img)
+        canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
 
     def init_code(self) -> str:
         imgVarname = f"img_{self.name.value}"
@@ -256,13 +254,13 @@ class RectElement(MatrixElement):
                 f"{INIT_TAB}#   Size: {self.size.value}\n"
                 f"{INIT_TAB}#   Fill color: {self.fill_color.value}\n"
                 f"{INIT_TAB}#   Stroke color: {self.stroke_color.value}\n"
-                f"{INIT_TAB}img_{self.name.value} = Image.new('RGB', (self.canvas.width, self.canvas.height))\n"
+                f"{INIT_TAB}img_{self.name.value} = Image.new('RGB', ({self.size.value[0]+1}, {self.size.value[1]+1}))\n"
                 f"{INIT_TAB}draw_{self.name.value} = ImageDraw.Draw(img_{self.name.value})\n"
-                f"{INIT_TAB}draw_{self.name.value}.rectangle(({self.pos.value[0]}, {self.pos.value[1]}, {self.pos.value[0] + self.size.value[0]}, {self.pos.value[1] + self.size.value[1]}), fill={self.fill_color.value}, outline={self.stroke_color.value})\n")
+                f"{INIT_TAB}draw_{self.name.value}.rectangle((0, 0, {self.size.value[0]}, {self.size.value[1]}), fill={self.fill_color.value}, outline={self.stroke_color.value})\n")
     
     def draw_code(self) -> str:
         return (
-                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value})\n")
+                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value}, {self.pos.value[0]}, {self.pos.value[1]})\n")
 
     def json(self):
         return self.__dict__
@@ -484,13 +482,11 @@ class EllipseElement(MatrixElement):
             log.warning(f"Color invalid; set to default. ({ve})")
         
     def draw(self, canvas: FrameCanvas):
-        img = Image.new("RGB", (canvas.width, canvas.height))
+        img = Image.new("RGB", (self.size.value[0] + 1, self.size.value[1] + 1))
         draw = ImageDraw.Draw(img)
-        draw.ellipse((self.pos.value[0], self.pos.value[1], 
-                        self.pos.value[0] + self.size.value[0], 
-                        self.pos.value[1] + self.size.value[1]),
+        draw.ellipse((0, 0, self.size.value[0], self.size.value[1]),
                         fill=self.fill_color.value, outline=self.stroke_color.value)
-        canvas.SetImage(img)
+        canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
 
     def init_code(self) -> str:
         imgVarname = f"img_{self.name.value}"
@@ -499,13 +495,13 @@ class EllipseElement(MatrixElement):
                 f"{INIT_TAB}#   Size: {self.size.value}\n"
                 f"{INIT_TAB}#   Fill color: {self.fill_color.value}\n"
                 f"{INIT_TAB}#   Stroke color: {self.stroke_color.value}\n"
-                f"{INIT_TAB}img_{self.name.value} = Image.new('RGB', (self.canvas.width, self.canvas.height))\n"
+                f"{INIT_TAB}img_{self.name.value} = Image.new('RGB', ({self.size.value[0]+1}, {self.size.value[1]+1}))\n"
                 f"{INIT_TAB}draw_{self.name.value} = ImageDraw.Draw(img_{self.name.value})\n"
-                f"{INIT_TAB}draw_{self.name.value}.ellipse(({self.pos.value[0]}, {self.pos.value[1]}, {self.pos.value[0] + self.size.value[0]}, {self.pos.value[1] + self.size.value[1]}), fill={self.fill_color.value}, outline={self.stroke_color.value})\n")
+                f"{INIT_TAB}draw_{self.name.value}.ellipse((0, 0, {self.size.value[0]}, {self.size.value[1]}), fill={self.fill_color.value}, outline={self.stroke_color.value})\n")
     
     def draw_code(self) -> str:
         return (
-                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value})\n")
+                f"{METHOD_TAB}self.canvas.SetImage(img_{self.name.value}, {self.pos.value[0]}, {self.pos.value[1]})\n")
 
     def json(self):
         return self.__dict__
