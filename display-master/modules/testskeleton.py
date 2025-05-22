@@ -28,12 +28,6 @@ class TestModule:
         self.nextCanvas = self.matrix.CreateFrameCanvas()
         self.components = [
             # Add components here!
-            # Rect(0, 0, 20, 10, (0, 0, 255), (255, 0, 0), 1),
-            # RectHollow(5, 5, 20, 10, (0, 255, 255), 2)
-            Ellipse(0, 0, 20, 20, (0, 0, 255), (0, 255, 0), 1),
-            Ellipse(0, 16, 30, 5, (0, 0, 255), (0, 255, 0), 1),
-            Ellipse(32, 0, 5, 30, (0, 0, 255), (0, 255, 0), 1),
-            Ellipse(32, 16, 30, 10, (0, 0, 255), (0, 255, 0), 1)
         ]
 
     def draw(self):
