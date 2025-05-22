@@ -130,8 +130,6 @@ class HollowPrimitiveComponent(Component):
             width of rectangle (px)
         h: int
             height of rectangle (px)
-        fillColor: tuple
-            (r,g,b) value of fill color
         strokeColor: tuple
             (r,g,b) value of stroke color (applied *inside* specified width/height)
         strokeWeight: int
@@ -227,3 +225,31 @@ class Ellipse(PrimitiveComponent):
             canvas.SetPixel(x_, y_, *self.stroke_color)
         for (x_, y_) in fillPts: 
             canvas.SetPixel(x_, y_, *self.fill_color)
+
+class EllipseHollow(HollowPrimitiveComponent): 
+    '''Draws an ellipse'''
+    tolerance = 0.05    # Makes ellipses look a little better
+
+    def draw(self, canvas: FrameCanvas):
+        # Find values required for ellipse plotting equation
+        ctrX = self.x + self.width / 2
+        ctrY = self.y + self.height / 2
+        axisA = self.width / 2
+        axisB = self.height / 2
+
+        # Create Numpy grid to match matrix
+        gridX, gridY = np.ogrid[:canvas.width, :canvas.height]
+
+        # Use ellipse equation to create grid masks
+        strokeMask = ((gridX - ctrX) / axisA) ** 2 + ((gridY - ctrY) / axisB) **2 <= 1 + self.tolerance
+        strokePts = np.argwhere(strokeMask)
+        # Calculate fill mask based on stroke mask
+        ptsX = strokePts[:,0]
+        ptsY = strokePts[:,1]
+        fillMask = ((ptsX - ctrX) / (axisA - self.stroke_weight)) ** 2 + ((ptsY - ctrY) / (axisB - self.stroke_weight)) ** 2 <= 1 + self.tolerance
+        fillPts = strokePts[fillMask]
+        # Flip coord order & convert to sets to remove fill
+        strokePts = set(map(tuple, strokePts)) - set(map(tuple, fillPts))
+
+        for (x_, y_) in strokePts: 
+            canvas.SetPixel(x_, y_, *self.stroke_color)
