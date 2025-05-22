@@ -63,11 +63,13 @@ from ThreadLoop import ThreadLoop
 # Import modules
 from clocks.basicclock import BasicClock
 from editor.base import Editor
+from testmodule import TestModule
 # from fonttest import Fonttest
 MODULES_PATH = "./display-master/modules"
 MODULES = {
     "basicclock": BasicClock,
-    "editor": Editor
+    "editor": Editor,
+    "testmodule": TestModule
 }
 
 # Other dependencies
@@ -108,6 +110,7 @@ class MyShell(Cmd):
         try:
             mod = MODULES[modname](matrix)
             log.info(f"Started module {modname}")
+            modRunning = True
         except KeyError as e:
             log.error(e)
             return
@@ -115,7 +118,6 @@ class MyShell(Cmd):
         mod.draw()
 
         if mod.doloop:
-            modRunning = True
             modThread = ThreadLoop(mod.delay, mod.loop)
 
         # while mod.doloop: 
@@ -138,7 +140,7 @@ class MyShell(Cmd):
         '''Stops a running module'''
         global modRunning, modThread
         if modRunning:
-            modThread.stop()
+            if modThread: modThread.stop()
             clearMatrix()
             log.info("Module stopped.")
             modRunning = False

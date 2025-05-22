@@ -10,7 +10,8 @@ v1.0: 22 May 2025
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from config import FONTS_PATH
-import Components
+# import Components
+from Components import *
 
 # Logging
 import logging
@@ -27,12 +28,17 @@ class TestModule:
         self.nextCanvas = self.matrix.CreateFrameCanvas()
         self.components = [
             # Add components here!
+            Rect(0, 0, 20, 10, (0, 0, 255), (255, 0, 0), 1)
         ]
 
     def draw(self):
+        self.nextCanvas.Clear()
         for c in self.components: 
-            c.draw()
+            c.draw(self.nextCanvas)
+        self.matrix.SwapOnVSync(self.nextCanvas)
 
     def loop(self):
+        self.nextCanvas.Clear()
         for c in self.components: 
             c.loop()
+        self.matrix.SwapOnVSync(self.nextCanvas)
