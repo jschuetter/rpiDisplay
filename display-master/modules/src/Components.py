@@ -177,14 +177,20 @@ class RectHollow(HollowPrimitiveComponent):
     '''Draws a rectangle.'''
 
     def draw(self, canvas: FrameCanvas):
-        for y in range(self.y, self.y + self.height):
-            for x in range(self.x, self.x + self.width):
-                # Check if pixel is inside stroke
-                if (
-                    (x < self.x + self.stroke_weight or 
-                    x >= self.x + self.width - self.stroke_weight) or 
-                    (y < self.y + self.stroke_weight or 
-                    y >= self.y + self.height - self.stroke_weight) 
-                ):
-                    canvas.SetPixel(x, y, *self.stroke_color)
-                # Do nothing if not inside stroke
+        # Find values inside stroke
+        stroke_y = set(
+            range(self.y, self.y + self.stroke_weight)
+        ).union(
+            range(self.y + self.height - self.stroke_weight, self.y + self.height)
+        )
+        stroke_x = set(
+            range(self.x, self.x + self.stroke_weight)
+        ).union(
+            range(self.x + self.width - self.stroke_weight, self.x + self.width)
+        )
+        for y in stroke_y:
+            for x in range(self.x, self.x + self.width): 
+                canvas.SetPixel(x, y, *self.stroke_color)
+        for x in stroke_x:
+            for y in range(self.y, self.y + self.height):
+                canvas.SetPixel(x, y, *self.stroke_color)

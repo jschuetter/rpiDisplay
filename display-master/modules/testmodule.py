@@ -28,7 +28,8 @@ class TestModule:
         self.nextCanvas = self.matrix.CreateFrameCanvas()
         self.components = [
             # Add components here!
-            Rect(0, 0, 20, 10, (0, 0, 255), (255, 0, 0), 1)
+            Rect(0, 0, 20, 10, (0, 0, 255), (255, 0, 0), 1),
+            RectHollow(5, 5, 20, 10, (0, 255, 255), 2)
         ]
 
     def draw(self):
