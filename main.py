@@ -68,7 +68,6 @@ MODULES_PATH = "./display-master/modules"
 MODULES = {
     "basicclock": BasicClock,
     "editor": Editor
-    # "fonttest": Fonttest
 }
 
 # Other dependencies
@@ -108,8 +107,9 @@ class MyShell(Cmd):
         (modname,) = arg.split()
         try:
             mod = MODULES[modname](matrix)
+            log.info(f"Started module {modname}")
         except KeyError as e:
-            print(e)
+            log.error(e)
             return
 
         mod.draw()
@@ -131,14 +131,14 @@ class MyShell(Cmd):
         if modRunning:
             modThread.stop()
             clearMatrix()
-            print("Module stopped.")
+            log.info("Module stopped.")
             modRunning = False
         else: 
             return
 
     def do_clearLog(self, arg):
         '''Clear logging file output'''
-        confirm = input("Are you sure? (y/n)")
+        confirm = input("Are you sure? (y/n) ")
         if confirm in ["y", "yes"]:
             with open(config.LOG_FILE, 'w'):
                 # Truncate file contents
