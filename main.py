@@ -1,7 +1,7 @@
 #!/bin/python
 '''
 Raspberry Pi RGB Matrix Display Project
-Version 0.0.2
+Version 0.1.0
 Jacob Schuetter
 
 Project history: 
@@ -9,11 +9,12 @@ Project history:
 - Last commit: 16 Feb 2025
 v0.0.1: main.py created, handles running modules behind CLI "controller"; modules updated to class scheme
 v0.0.2: logging module implemented, to both alternate terminal ouptut and file output
+v0.1.0: first working version of editor module added
 
 This file: 
 Current version contains command-line interface for calling existing modules from project root directory
 - Created: 09 Feb 2025
-- Updated 16 Feb 2025
+- Updated 22 May 2025
 '''
 
 from cmd import Cmd

@@ -21,3 +21,11 @@ Font sources:
 - ibm: github.com/farsil/ibmfonts
 - spleen: github.com/fcambus/spleen
 - basic: github.com/hzeller/rpi-rgb-matrix
+
+## Modules
+### BasicClock
+A basic clock display with date and time displayed in 24-hour format hh:mm:ss. 
+
+### Editor
+A dev tool designed for laying out new modules. 
+Note that this is *not* designed for creating fully-fledged modules. It has no ability to dynamically-assign element content or create animated elements. It is only for creating the general layout without having to trial-and-error things into place. 
