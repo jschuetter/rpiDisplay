@@ -122,8 +122,17 @@ class MyShell(Cmd):
         #     mod.loop()
         #     time.sleep(mod.delay)
 
+    def complete_run(self, text, line, begidx, endidx):
+        # Ignore after 1st argument
+        if len(line.split()) + line.endswith(" ") > 2: 
+            return []
+        
+        valid = list(MODULES.keys())
+        return [v for v in valid if v.startswith(text)]
+    
     # Alias do_run
     do_r = do_run
+    complete_r = complete_run
 
     def do_stop(self, arg):
         '''Stops a running module'''
@@ -136,7 +145,7 @@ class MyShell(Cmd):
         else: 
             return
 
-    def do_clearLog(self, arg):
+    def do_clearlog(self, arg):
         '''Clear logging file output'''
         confirm = input("Are you sure? (y/n) ")
         if confirm in ["y", "yes"]:
