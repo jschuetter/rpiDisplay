@@ -253,3 +253,59 @@ class EllipseHollow(HollowPrimitiveComponent):
 
         for (x_, y_) in strokePts: 
             canvas.SetPixel(x_, y_, *self.stroke_color)
+
+class Line(PrimitiveComponent): 
+    '''Draws a line.'''
+
+    def __init__(self, startX: int, startY: int, endX: int, endY: int, 
+                strokeColor: tuple, strokeWeight: int): 
+        '''
+        Parameters
+        ------------
+        x0: int
+            x-coordinate of the start of the line
+        y0: int
+            y-coordinate of the start of the line
+        x1: int
+            x-coordinate of the end of the line
+        y1: int
+            y-coordinate of the end of the line
+        strokeColor: tuple
+            Color of the line, in (r,g,b) format
+        strokeWeight: int
+            Width of the line'''
+
+        self.x0 = startX
+        self.y0 = startY
+        self.x1 = endX
+        self.y1 = endY
+
+        if not isinstance(strokeColor, tuple) or len(strokeColor) != 3:
+            raise ValueError("Colors must be specified in tuples of length 3")
+        for val in strokeColor:
+            if val < 0 or val > 255:
+                raise ValueError("Color values must be in [0,255]")
+        self.stroke_color = strokeColor
+
+        if strokeWeight < 1: 
+            raise ValueError("Stroke weight cannot be less than 1")
+        self.stroke_weight = strokeWeight
+
+    def draw(self, canvas: FrameCanvas): 
+        # Calculate slope
+        try: 
+            m = (self.y1 - self.y0) / (self.x1 - self.x0)
+        except ZeroDivisionError: 
+            # Draw vertical line
+            for wt in range(self.stroke_weight): 
+                wtFactor = wt * ((-1) ** wt)
+                for y in range(max(0, self.y0), min(33, self.y1)): 
+                    canvas.SetPixel(self.x0 + wtFactor, y, *self.stroke_color)
+            return
+
+        
+        # Draw lines on alternating sides of original to increase width
+        for wt in range(self.stroke_weight): 
+            wtFactor = np.ceil(wt/2) * ((-1) ** wt)
+            for x in range(max(0, self.x0), min(65, self.x1)): 
+                canvas.SetPixel(x, np.trunc(m*x+self.y0+wtFactor), *self.stroke_color)
