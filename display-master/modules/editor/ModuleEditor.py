@@ -12,6 +12,7 @@ from cli import parse, print_props
 
 import os, re, json
 import logging
+import traceback
 from typing import Any
 from warnings import warn
 from shutil import copy as fcopy
@@ -66,8 +67,8 @@ class ModuleEditor(cmd.Cmd):
         path_ = os.path.join(parentDir,compName + ".json")
         if os.path.exists(path_): 
             while True:
-                confirm = input("This path already exists! Do you want to over[w]rite, \
-                                [o]pen, or [c]ancel? (w/o/c)")
+                confirm = input("This path already exists!  Do you want to over[w]rite, "
+                                "[o]pen, or [c]ancel? (w/o/c)")
                 confirm = confirm.partition(" ")[0].lower()
                 if confirm in ["w", "overwrite", "write"]: 
                     break
@@ -134,7 +135,7 @@ class ModuleEditor(cmd.Cmd):
             for k, v in jsonFile.items():
                 for props in v:
                     newEl = cli.ELEMENT_TYPES[k].from_dict(props)
-                    log.debug(newEl.__dict__)
+                    # log.debug(newEl.__dict__)
                     self.working["elements"].append(newEl)
             self.refresh_canvas()
 
@@ -174,16 +175,36 @@ class ModuleEditor(cmd.Cmd):
             return
 
         elType = args[0]
-        elArgs = args[1:]
-        invalidArgs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
-        if invalidArgs:
-            print(invalidArgs)
-            print(cli.ELEMENT_TYPES[elType].docstr)
+        # Take element type, then prompt for other arguments
+        elArgs = []
+        for pi in range(len(cli.ELEMENT_TYPES[elType].params)):
+            # Prompt for next parameter
+            curParam = cli.ELEMENT_TYPES[elType].params[pi]
+            elArgs.append(input(f"{curParam.name} ({str(curParam.type)}): "))
+
+        # elArgs = args[1:]
+        # invalidArgs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
+        # if invalidArgs:
+        #     print(invalidArgs)
+        #     print(cli.ELEMENT_TYPES[elType].docstr)
+        #     return
+        # if elArgs[0] in [el.name for el in self.working["elements"]]:
+        #     print("Name must be unique (all other args valid).")
+        #     return
+        try: 
+            # Test arguments
+            argErrs = cli.ELEMENT_TYPES[elType].testArgs(*elArgs)
+            if argErrs is None: 
+                newEl = cli.ELEMENT_TYPES[elType](*elArgs)
+            else:
+                log.error(argErrs)
+                return
+        except Exception as e: 
+            # Handle exceptions non-fatally
+            log.error(e)
+            log.debug(f"Traceback: {traceback.extract_tb(e.__traceback__)}")
             return
-        if elArgs[0] in [el.name for el in self.working["elements"]]:
-            print("Name must be unique (all other args valid).")
-            return
-        newEl = cli.ELEMENT_TYPES[elType](*elArgs)
+        
 
         self.working["elements"].append(newEl)
         self.update_all()
@@ -275,7 +296,7 @@ class ModuleEditor(cmd.Cmd):
         for p, v in vars(el).items():
             if p == args[1]:
                 # Check types of provided values
-                argList = []
+                elArgs = []
                 for i in range(len(v.type_)):
                     t = Elements.Property.typemap_str[v.type_[i]]
                     try:
@@ -292,13 +313,13 @@ class ModuleEditor(cmd.Cmd):
                         f"{ [Elements.Property.typemap_str[t] for t in v.type_] }")
                         return
                     # Add arg to list
-                    argList.append(arg)
+                    elArgs.append(arg)
 
                 # Get requested value from cmd args
-                if len(argList) > 1:
-                    val = tuple(argList)
+                if len(elArgs) > 1:
+                    val = tuple(elArgs)
                 else:
-                    val = argList[0]
+                    val = elArgs[0]
 
                 # Test for value in list of accepted values
                 if v.mode == "s" and val not in v.options:
@@ -612,10 +633,11 @@ class ModuleEditor(cmd.Cmd):
         if not self.working:
             raise RuntimeError("Cannot draw without open composition")
 
-        canvas = self.matrix.CreateFrameCanvas()
+        # canvas = self.matrix.CreateFrameCanvas()
+        self.canvas.Clear()
         for el in self.working["elements"]:
-            el.draw(canvas)
-        self.matrix.SwapOnVSync(canvas)
+            el.draw(self.canvas)
+        self.matrix.SwapOnVSync(self.canvas)
         return
 
     def sort_working(self):

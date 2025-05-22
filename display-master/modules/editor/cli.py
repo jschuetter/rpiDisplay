@@ -10,7 +10,7 @@ Jacob Schuetter
 # RGB self.matrix dependencies
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 import config 
-from config import FONTS_PATH
+from config import FONTS_PATH, EXPORT_PATH
 
 import os
 from warnings import warn
@@ -24,10 +24,12 @@ import logging
 log = logging.getLogger(__name__)
 
 ELEMENT_TYPES = {"icon": Elements.IconElement, 
-        "image":None, 
+        "image":Elements.ImageElement, 
         "text": Elements.TextElement, 
-        "rect":None, 
-        "ellipse":None
+        "rect":Elements.RectElement, 
+        "ellipse":Elements.EllipseElement,
+        "line":Elements.LineElement,
+        "circle":Elements.CircleElement
         }
 ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
 
@@ -97,12 +99,13 @@ CLASS_BOILERPLATE_1 = """
 
     # Initial frame draw
     def draw(self):
-
+        self.canvas.Clear()
         # Element code here
 """
 CLASS_BOILERPLATE_2 = """
     # Code to refresh on every frame update
     def loop(self): 
+        self.canvas.Clear()
         # Element code here
 """
 # Number of tabs to insert before each line of element code
@@ -119,7 +122,7 @@ def export_code(fileName: str, compElements: list):
         (will usually be working["elements"])'''
 
     BOILERPLATE_PATH = "display-master/modules/editor/matrixBoilerplate.py"
-    exportPath = f"display-master/modules/exports/{fileName}.py"
+    exportPath = f"{EXPORT_PATH}{fileName}.py"
 
     fcopy(BOILERPLATE_PATH, exportPath)
     # Copy boilerplate file and append element code

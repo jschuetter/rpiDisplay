@@ -13,21 +13,20 @@ import os, json, webcolors
 
 # from rgbmatrix import FrameCanvas, graphics
 
-def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict:
-    '''Helper method for creating parameter dictionaries more concisely
+# def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict:
+#     '''Helper method for creating parameter dictionaries more concisely
     
-    Returns dict containing param data'''
-    return {
-        "name": name,
-        "type": type_,
-        "description": desc, 
-        "optional": optional
-    }
+#     Returns dict containing param data'''
+#     return {
+#         "name": name,
+#         "type": type_,
+#         "description": desc, 
+#         "optional": optional
+#     }
 def print_params(params):
     paramDocs = ""
     for p in params:
-        paramDocs += f"{p.get('name')}: {p.get('type')}\n\t{p.get('description')}\n\t" + \
-            f"Optional: {p.get('optional')}\n"
+        paramDocs += p.pretty_print()
     return paramDocs
 
 class CEnc(json.JSONEncoder):
