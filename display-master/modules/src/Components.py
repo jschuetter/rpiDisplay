@@ -104,9 +104,10 @@ class PrimitiveComponent(Component):
             [np.cos(rad), -np.sin(rad)], 
             [np.sin(rad), np.cos(rad)]
         ])
-        output = points + translate_matrix
-        output = output @ rotation_matrix.T
-        output = output - translate_matrix
+        output = points + translate_matrix      # Translate to origin
+        output = output @ rotation_matrix.T     # Rotate
+        output = output - translate_matrix      # Translate back to original position
+        output = np.round(output)       # Round result to nearest integers
         return set(map(tuple, output))
         # print(type(self.fill_pts))
 
