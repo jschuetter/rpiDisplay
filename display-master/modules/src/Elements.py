@@ -21,6 +21,7 @@ from rgbmatrix import FrameCanvas, graphics
 from Property import Property
 from Param import Parameter
 from elementhelpers import *
+from Components import *
 
 # Element dependencies
 # IconElement, Primitive elements
@@ -482,11 +483,18 @@ class EllipseElement(MatrixElement):
             log.warning(f"Color invalid; set to default. ({ve})")
         
     def draw(self, canvas: FrameCanvas):
-        img = Image.new("RGB", (self.size.value[0] + 1, self.size.value[1] + 1))
-        draw = ImageDraw.Draw(img)
-        draw.ellipse((0, 0, self.size.value[0], self.size.value[1]),
-                        fill=self.fill_color.value, outline=self.stroke_color.value)
-        canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
+        # img = Image.new("RGB", (self.size.value[0] + 1, self.size.value[1] + 1))
+        # draw = ImageDraw.Draw(img)
+        # draw.ellipse((0, 0, self.size.value[0], self.size.value[1]),
+        #                 fill=self.fill_color.value, outline=self.stroke_color.value)
+        # canvas.SetImage(img, self.pos.value[0], self.pos.value[1])
+        component = Ellipse(
+            self.pos.value[0], self.pos.value[1],
+            self.size.value[0], self.size.value[1], 
+            fill=config.webcolor_to_rgb(self.fill_color.value), 
+            stroke=config.webcolor_to_rgb(self.stroke_color.value), 
+        )
+        component.draw(canvas)
 
     def init_code(self) -> str:
         imgVarname = f"img_{self.name.value}"

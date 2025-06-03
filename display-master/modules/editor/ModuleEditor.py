@@ -661,8 +661,8 @@ class ModuleEditor(cmd.Cmd):
                 for i in range(len(self.working["elements"])):
                     el = self.working["elements"][i]
                     el.layer.value = i
-        if do_write_json: self.write_json()
         if do_refresh_canvas: self.refresh_canvas()
+        if do_write_json: self.write_json()
 
     def export_code(self, fileName: str, compElements: list):
         '''Exports current composition as Python code and writes to output file.
