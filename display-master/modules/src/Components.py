@@ -109,13 +109,7 @@ class PrimitiveComponent(Component):
         output = output - translate_matrix      # Translate back to original position
         output = np.round(output)       # Round result to nearest integers
         return set(map(tuple, output))
-        # print(type(self.fill_pts))
-
-        # if self.fill_pts: 
-        #     self.fill_pts = self.fill_pts @ rotation_matrix.T
-        # if self.stroke_pts: 
-        #     self.stroke_pts = self.stroke_pts @ rotation_matrix.T
-
+        
     @typechecked
     def __init__(self, x_: int, y_: int, w: int, h: int, 
                 *, 
@@ -183,17 +177,7 @@ class PrimitiveComponent(Component):
         self.getFillPts()
         self.getStrokePts()
 
-        # Rotate shape if needed
-        # self.rotation = angle       # Do we need to store rotation value?
-        # if angle: 
-        #     self.rotate(angle)
-
     def draw(self, canvas: FrameCanvas):
-        # if not self.fill_pts and not self.no_fill: 
-        #     self.getFillPts()
-        # if not self.stroke_pts and self.stroke_weight > 0: 
-        #     self.getStrokePts()
-
         if self.fill_color: 
             for pX, pY in self.fill_pts: 
                 canvas.SetPixel(pX, pY, *self.fill_color)
@@ -219,14 +203,7 @@ class Rect(PrimitiveComponent):
             np.arange(fillY, fillY + fillH)
         )
         pts_array = np.column_stack([xArr.ravel(), yArr.ravel()])
-        # xArr, yArr = np.meshgrid(
-        #     np.arange(fillX, fillX + fillW),
-        #     np.arange(fillY, fillY + fillH)
-        # )
-        # Rotate points
-        # xArr, yArr = self.rotate(pts_array, self.rotation)
         self.fill_pts = self.rotate(pts_array, self.rotation)
-        # self.fill_pts = tuple(zip(xArr.ravel(), yArr.ravel()))
 
     def getStrokePts(self): 
         # If stroke weight is 0, return empty
@@ -246,7 +223,6 @@ class Rect(PrimitiveComponent):
             np.concatenate([topY, bottomY])
         )
         horizPts = np.column_stack([hX.ravel(), hY.ravel()])
-        # horizPts = tuple(zip(hX.ravel(), hY.ravel()))
 
         # Calculate vertical sides
         leftX = np.arange(self.x, self.x + self.stroke_weight)
@@ -263,38 +239,12 @@ class Rect(PrimitiveComponent):
             vertY
         )
         vertPts = np.column_stack([vX.ravel(), vY.ravel()])
-        # vertPts = tuple(zip(vX.ravel(), vY.ravel()))
 
         # Concatenate horizontal & vertical
-        # pts_array = np.concatenate(hPts, vPts)
-        # xArr, yArr = self.rotate(horizPts + vertPts, self.rotation)
         self.stroke_pts = self.rotate(
             np.concatenate((horizPts, vertPts), axis=0), 
             self.rotation
             )
-        # self.stroke_pts = tuple(zip(xArr.ravel(), yArr.ravel()))
-
-        # Return concatenation of horizontal & vertical sides
-        # self.stroke_pts = horizPts + vertPts
-
-    # def draw(self, canvas: FrameCanvas):
-    #     if not self.no_fill: 
-    #         for pX, pY in self.fill_pts: 
-    #             canvas.SetPixel(pX, pY, *self.fill_color)
-    #     for pX, pY in self.stroke_pts: 
-    #         canvas.SetPixel(pX, pY, *self.stroke_color)
-    #     for y in range(self.y, self.y + self.height):
-    #         for x in range(self.x, self.x + self.width):
-    #             # Check if pixel is inside stroke
-    #             if (
-    #                 (x < self.x + self.stroke_weight or 
-    #                 x >= self.x + self.width - self.stroke_weight) or 
-    #                 (y < self.y + self.stroke_weight or 
-    #                 y >= self.y + self.height - self.stroke_weight) 
-    #             ):
-    #                 canvas.SetPixel(x, y, *self.stroke_color)
-    #             elif self.do_fill: 
-    #                 canvas.SetPixel(x, y, *self.fill_color)
 
 class Ellipse(PrimitiveComponent): 
     '''Draws an ellipse'''
@@ -323,13 +273,8 @@ class Ellipse(PrimitiveComponent):
         # print(strokePts)
         strokePtsArray = np.array(list(strokePts))
         # Calculate fill mask based on stroke mask
-        # ptsX, ptsY = zip(*strokePts)
-        # print(strokePtsArray)
-        # print(type(strokePtsArray))
         ptsX = strokePtsArray[:,0]
         ptsY = strokePtsArray[:,1]
-        # ptsX = np.array(ptsX)
-        # ptsY = np.array(ptsY)
         fillMask = ((ptsX - ctrX) / (axisA - self.stroke_weight)) ** 2 + ((ptsY - ctrY) / (axisB - self.stroke_weight)) ** 2 <= 1 + self.tolerance
         fillPts = strokePtsArray[fillMask]
         # Rotate shape
@@ -344,34 +289,6 @@ class Ellipse(PrimitiveComponent):
         self.getAllPts()
     def getStrokePts(self): 
         self.getAllPts()
-
-    # def draw(self, canvas: FrameCanvas):
-    #     # Find values required for ellipse plotting equation
-    #     ctrX = self.x + self.width / 2
-    #     ctrY = self.y + self.height / 2
-    #     axisA = self.width / 2
-    #     axisB = self.height / 2
-
-    #     # Create Numpy grid to match matrix
-    #     gridX, gridY = np.ogrid[:canvas.width, :canvas.height]
-
-    #     # Use ellipse equation to create grid masks
-    #     strokeMask = ((gridX - ctrX) / axisA) ** 2 + ((gridY - ctrY) / axisB) **2 <= 1 + self.tolerance
-    #     strokePts = np.argwhere(strokeMask)
-    #     # Calculate fill mask based on stroke mask
-    #     ptsX = strokePts[:,0]
-    #     ptsY = strokePts[:,1]
-    #     fillMask = ((ptsX - ctrX) / (axisA - self.stroke_weight)) ** 2 + ((ptsY - ctrY) / (axisB - self.stroke_weight)) ** 2 <= 1 + self.tolerance
-    #     fillPts = strokePts[fillMask]
-    #     # Flip coord order & convert to sets to remove 
-    #     fillPts = set(map(tuple, fillPts))
-    #     strokePts = set(map(tuple, strokePts)) - fillPts
-
-    #     for (x_, y_) in strokePts: 
-    #         canvas.SetPixel(x_, y_, *self.stroke_color)
-    #     if self.do_fill: 
-    #         for (x_, y_) in fillPts: 
-    #             canvas.SetPixel(x_, y_, *self.fill_color)
 
 class Line(PrimitiveComponent): 
     '''Draws a line.'''
