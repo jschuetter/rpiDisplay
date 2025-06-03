@@ -72,13 +72,56 @@ class PrimitiveComponent(Component):
     def getStrokePts(self): 
         self.stroke_pts = ()
 
+    def rotate(self, ptArray: Union[tuple, set, np.ndarray], degrees: int): 
+        '''
+        Helper method for rotating np.ndarray objects of 
+        points
+        ------------
+        Parameters: 
+        ------------
+        ptArray: tuple(tuple(int, int)) 
+                OR set(tuple(int, int)) 
+                OR 2-D np.ndarray of int pairs
+            - Array of point values 
+        degrees: int
+            - Degrees by which to rotate
+        ------------
+        Returns: array of points as set(tuple(int, int))
+        ------------
+        '''
+        if degrees == 0: 
+            return ptArray
+        if isinstance(ptArray, tuple) or isinstance(ptArray, set): 
+            points = np.array(ptArray)
+        elif isinstance(ptArray, np.ndarray): 
+            points = ptArray
+        else: 
+            raise ValueError("ptArray must be either tuple or np.ndarray!")
+
+        rad = np.radians(degrees)
+        translate_matrix = np.array([-self.x, -self.y])
+        rotation_matrix = np.array([
+            [np.cos(rad), -np.sin(rad)], 
+            [np.sin(rad), np.cos(rad)]
+        ])
+        output = points + translate_matrix
+        output = output @ rotation_matrix.T
+        output = output - translate_matrix
+        return set(map(tuple, output))
+        # print(type(self.fill_pts))
+
+        # if self.fill_pts: 
+        #     self.fill_pts = self.fill_pts @ rotation_matrix.T
+        # if self.stroke_pts: 
+        #     self.stroke_pts = self.stroke_pts @ rotation_matrix.T
+
     @typechecked
     def __init__(self, x_: int, y_: int, w: int, h: int, 
-                fillColor: Union[tuple, None] = (255,255,255), 
-                strokeColor: Union[tuple, None] = (255,255,255), 
-                strokeWeight: int = 0,
                 *, 
-                noFill: bool = False): 
+                fill: Union[tuple, None] = (255,255,255), 
+                stroke: Union[tuple, None] = (255,255,255), 
+                weight: int = 1,
+                angle: int = 0):
         '''
         Parameters
         ------------
@@ -90,17 +133,14 @@ class PrimitiveComponent(Component):
             width (px)
         h: int
             height (px)
-        fillColor: tuple | None
+        fill: tuple | None
             (r,g,b) value of fill color
-            If None: sets no_fill to True
-        strokeColor: tuple
+        stroke: tuple
             (r,g,b) value of stroke color (applied *inside* specified width/height)
             If None: sets stroke_weight to 0
-        strokeWeight: int
+        weight: int
             Width of stroke in px (applied *inside* specified width/height)
-        noFill: bool
-            Skip drawing fill of shape (defaults to False)
-        rotateDegrees: int
+        rotation: int
             Number of degrees to rotate about shape origin
         ----------------
         Other Attributes
@@ -118,46 +158,45 @@ class PrimitiveComponent(Component):
         self.width = w
         self.height = h
 
-        for colorValue in (fillColor, strokeColor):
+        for colorValue in (fill, stroke):
             if colorValue is not None: 
                 if not isinstance(colorValue, tuple) or len(colorValue) != 3:
                     raise ValueError("Colors must be specified in tuples of length 3")
                 for val in colorValue:
                     if val < 0 or val > 255:
                         raise ValueError("Color values must be in [0,255]")
-        self.fill_color = fillColor
-        self.stroke_color = strokeColor
+        self.fill_color = fill
+        self.stroke_color = stroke
 
         if self.stroke_color is None: 
             self.stroke_weight = 0
         else: 
-            if strokeWeight < 0: 
+            if weight < 0: 
                 raise ValueError("Stroke weight cannot be negative")
-            elif strokeWeight > self.height // 2: 
+            elif weight > self.height // 2: 
                 raise ValueError(f"Stroke weight cannot be greater than half the height ({self.height//2})")
-            self.stroke_weight = strokeWeight
-
-        if self.fill_color is None: 
-            self.no_fill = True
-        else: 
-            self.no_fill = noFill
-
-        self.rotation = rotateDegrees
+            self.stroke_weight = weight
 
         # Store coordinates of each point in shape
+        self.rotation = angle
         self.getFillPts()
         self.getStrokePts()
 
-    def draw(self, canvas: FrameCanvas):
-        if not self.fill_pts and not self.no_fill: 
-            self.getFillPts()
-        if not self.stroke_pts and self.stroke_weight > 0: 
-            self.getStrokePts()
+        # Rotate shape if needed
+        # self.rotation = angle       # Do we need to store rotation value?
+        # if angle: 
+        #     self.rotate(angle)
 
-        if not self.no_fill: 
+    def draw(self, canvas: FrameCanvas):
+        # if not self.fill_pts and not self.no_fill: 
+        #     self.getFillPts()
+        # if not self.stroke_pts and self.stroke_weight > 0: 
+        #     self.getStrokePts()
+
+        if self.fill_color: 
             for pX, pY in self.fill_pts: 
                 canvas.SetPixel(pX, pY, *self.fill_color)
-        if self.stroke_weight > 0: 
+        if self.stroke_color: 
             for pX, pY in self.stroke_pts: 
                 canvas.SetPixel(pX, pY, *self.stroke_color)
 
@@ -166,7 +205,7 @@ class Rect(PrimitiveComponent):
 
     def getFillPts(self):
         # If do_fill is False, return empty
-        if self.no_fill: 
+        if not self.fill_color: 
             self.fill_pts = ()
             return
 
@@ -178,7 +217,15 @@ class Rect(PrimitiveComponent):
             np.arange(fillX, fillX + fillW),
             np.arange(fillY, fillY + fillH)
         )
-        self.fill_pts = tuple(zip(xArr.ravel(), yArr.ravel()))
+        pts_array = np.column_stack([xArr.ravel(), yArr.ravel()])
+        # xArr, yArr = np.meshgrid(
+        #     np.arange(fillX, fillX + fillW),
+        #     np.arange(fillY, fillY + fillH)
+        # )
+        # Rotate points
+        # xArr, yArr = self.rotate(pts_array, self.rotation)
+        self.fill_pts = self.rotate(pts_array, self.rotation)
+        # self.fill_pts = tuple(zip(xArr.ravel(), yArr.ravel()))
 
     def getStrokePts(self): 
         # If stroke weight is 0, return empty
@@ -197,7 +244,8 @@ class Rect(PrimitiveComponent):
             horizX, 
             np.concatenate([topY, bottomY])
         )
-        horizPts = tuple(zip(hX.ravel(), hY.ravel()))
+        horizPts = np.column_stack([hX.ravel(), hY.ravel()])
+        # horizPts = tuple(zip(hX.ravel(), hY.ravel()))
 
         # Calculate vertical sides
         leftX = np.arange(self.x, self.x + self.stroke_weight)
@@ -213,10 +261,20 @@ class Rect(PrimitiveComponent):
             np.concatenate([leftX, rightX]), 
             vertY
         )
-        vertPts = tuple(zip(vX.ravel(), vY.ravel()))
+        vertPts = np.column_stack([vX.ravel(), vY.ravel()])
+        # vertPts = tuple(zip(vX.ravel(), vY.ravel()))
+
+        # Concatenate horizontal & vertical
+        # pts_array = np.concatenate(hPts, vPts)
+        # xArr, yArr = self.rotate(horizPts + vertPts, self.rotation)
+        self.stroke_pts = self.rotate(
+            np.concatenate((horizPts, vertPts), axis=0), 
+            self.rotation
+            )
+        # self.stroke_pts = tuple(zip(xArr.ravel(), yArr.ravel()))
 
         # Return concatenation of horizontal & vertical sides
-        self.stroke_pts = horizPts + vertPts
+        # self.stroke_pts = horizPts + vertPts
 
     # def draw(self, canvas: FrameCanvas):
     #     if not self.no_fill: 
@@ -261,12 +319,22 @@ class Ellipse(PrimitiveComponent):
         # Use ellipse equation to create grid masks
         strokeMask = ((gridX - ctrX) / axisA) ** 2 + ((gridY - ctrY) / axisB) **2 <= 1 + self.tolerance
         strokePts = np.argwhere(strokeMask)
+        # print(strokePts)
+        strokePtsArray = np.array(list(strokePts))
         # Calculate fill mask based on stroke mask
-        ptsX = strokePts[:,0]
-        ptsY = strokePts[:,1]
+        # ptsX, ptsY = zip(*strokePts)
+        # print(strokePtsArray)
+        # print(type(strokePtsArray))
+        ptsX = strokePtsArray[:,0]
+        ptsY = strokePtsArray[:,1]
+        # ptsX = np.array(ptsX)
+        # ptsY = np.array(ptsY)
         fillMask = ((ptsX - ctrX) / (axisA - self.stroke_weight)) ** 2 + ((ptsY - ctrY) / (axisB - self.stroke_weight)) ** 2 <= 1 + self.tolerance
-        fillPts = strokePts[fillMask]
-        # Flip coord order & convert to sets to remove 
+        fillPts = strokePtsArray[fillMask]
+        # Rotate shape
+        strokePts = self.rotate(strokePts, self.rotation)
+        fillPts = self.rotate(fillPts, self.rotation)
+        # Convert coords to sets of tuples
         self.fill_pts = set(map(tuple, fillPts))
         self.stroke_pts = set(map(tuple, strokePts)) - self.fill_pts
 
@@ -308,7 +376,9 @@ class Line(PrimitiveComponent):
     '''Draws a line.'''
 
     def __init__(self, startX: int, startY: int, endX: int, endY: int, 
-                strokeColor: tuple, strokeWeight: int): 
+                stroke: tuple = (255, 255, 255), 
+                *, 
+                weight: int = 1): 
         '''
         Parameters
         ------------
@@ -320,9 +390,9 @@ class Line(PrimitiveComponent):
             x-coordinate of the end of the line
         y1: int
             y-coordinate of the end of the line
-        strokeColor: tuple
+        stroke: tuple
             Color of the line, in (r,g,b) format
-        strokeWeight: int
+        weight: int
             Width of the line'''
 
         self.x0 = startX
@@ -330,16 +400,16 @@ class Line(PrimitiveComponent):
         self.x1 = endX
         self.y1 = endY
 
-        if not isinstance(strokeColor, tuple) or len(strokeColor) != 3:
+        if not isinstance(stroke, tuple) or len(stroke) != 3:
             raise ValueError("Colors must be specified in tuples of length 3")
-        for val in strokeColor:
+        for val in stroke:
             if val < 0 or val > 255:
                 raise ValueError("Color values must be in [0,255]")
-        self.stroke_color = strokeColor
+        self.stroke_color = stroke
 
-        if strokeWeight < 1: 
+        if weight < 1: 
             raise ValueError("Stroke weight cannot be less than 1")
-        self.stroke_weight = strokeWeight
+        self.stroke_weight = weight
 
     def draw(self, canvas: FrameCanvas): 
         # Calculate slope
@@ -359,5 +429,12 @@ class Line(PrimitiveComponent):
             wtFactor = np.ceil(wt/2) * ((-1) ** wt)
             for x in range(max(0, self.x0), min(65, self.x1)): 
                 canvas.SetPixel(x, np.trunc(m*x+self.y0+wtFactor), *self.stroke_color)
+
+#endregion
+
+#region text components
+class Text(Component):
+    '''Draws text to the display'''
+
 
 #endregion
