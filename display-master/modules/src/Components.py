@@ -390,8 +390,9 @@ class Text(Component):
 
 #region image components
 class Icon(Component): 
-    '''Draw a .bmp image to matrix'''
+    '''Draw a .bmp image directly to matrix'''
 
+    @typechecked
     def __init__(self, x_: int, y_: int, path: str):
         '''
         Parameters: 
@@ -411,7 +412,57 @@ class Icon(Component):
         elif not path.endswith(".bmp"): 
             raise ValueError("Path must be an image in .bmp format")
         self.path = path        # Do we need to store this?
-        self.icon = Image.open(path).convert("RGB")
+        imgTemp = Image.open(path)
+        self.img = imgTemp.convert("RGB")
     
     def draw(self, canvas: FrameCanvas):
-        canvas.SetImage(self.icon, self.x, self.y)
+        canvas.SetImage(self.img, self.x, self.y)
+    
+class RasterImage(Component): 
+    '''Scale, then draw an image to matrix'''
+
+    @typechecked
+    def __init__(self, x_: int, y_: int, 
+        path: str, 
+        wBound: Optional[int], hBound: Optional[int],
+        *,
+        antialias: bool = True):
+        '''
+        Parameters: 
+        -------------
+        x_: int
+            x position
+        y_: int
+            y position
+        path: str
+            Path of image file to use
+        wBound: int
+            Bound on image width (maintains aspect ratio)
+        hBound: int
+            Bound on image height (maintains aspect ratio)
+        antialias: bool
+            Flag to optionally disable anti-aliasing
+        '''
+
+        super().__init__(x_, y_)
+        if not os.path.exists(path): 
+            raise ValueError("Path does not exist!")
+        elif os.path.splitext(path)[-1] not in [".png", ".jpg", ".bmp"]: 
+            raise ValueError("Path must be an image in .png, .jpg, or .bmp format")
+        self.path = path        # Do we need to store this?
+        imgTransform = Image.open(path)
+        # Get image dimensions as fallback value for image bound
+        imgW, imgH = imgTransform.size
+        if not wBound: 
+            wBound = imgW
+        if not hBound: 
+            hBound = imgH
+        if antialias: 
+            imgTransform.thumbnail((wBound or imgW, hBound or imgH), Image.ANTIALIAS)
+        else: 
+            imgTransform.thumbnail((wBound or imgW, hBound or imgH))
+        self.img = imgTransform.convert("RGB")
+    
+    def draw(self, canvas: FrameCanvas):
+        canvas.SetImage(self.img, self.x, self.y)
+    
