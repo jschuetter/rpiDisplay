@@ -360,8 +360,6 @@ class Text(Component):
         *, 
         font: str = "basic/4x6.bdf",
         color: tuple = (255, 255, 255),
-        scoreColor: Optional[tuple] = None,
-        scoreWeight: Optional[int] = 1
         ):
         '''
         Parameters
@@ -377,10 +375,6 @@ class Text(Component):
             Path to font to use
         color: tuple
             Color of text
-        scoreColor: tuple
-            Color of underline or background
-        scoreWeight: int
-            Height or weight of underline or background
         '''
         super().__init__(x_, y_)
         self.text = text_
@@ -388,19 +382,9 @@ class Text(Component):
         self.font = graphics.Font()
         self.font.LoadFont(FONTS_PATH + font)
         self.font_color = graphics.Color(*color)
-        self.background_color = scoreColor
-        self.background_height = scoreWeight
 
     def draw(self, canvas: FrameCanvas): 
         textLen = graphics.DrawText(canvas, self.font, self.x, self.y, self.font_color, self.text)
-        # If background color is set, draw rect behind text
-        if self.background_color: 
-            bg = Rect(
-                self.x, self.y-self.background_height, 
-                textLen, self.background_height, 
-                fill=self.background_color
-                )
-            bg.draw(canvas)
 
 
 #endregion
