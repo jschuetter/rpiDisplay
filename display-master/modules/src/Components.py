@@ -418,14 +418,14 @@ class Icon(Component):
     def draw(self, canvas: FrameCanvas):
         canvas.SetImage(self.img, self.x, self.y)
     
-class RasterImage(Component): 
+class RasterImage(Icon): 
     '''Scale, then draw an image to matrix'''
 
     @typechecked
     def __init__(self, x_: int, y_: int, 
         path: str, 
-        wBound: Optional[int], hBound: Optional[int],
         *,
+        width: Optional[int], height: Optional[int],
         antialias: bool = True):
         '''
         Parameters: 
@@ -436,15 +436,17 @@ class RasterImage(Component):
             y position
         path: str
             Path of image file to use
-        wBound: int
+        width: int
             Bound on image width (maintains aspect ratio)
-        hBound: int
+        height: int
             Bound on image height (maintains aspect ratio)
         antialias: bool
             Flag to optionally disable anti-aliasing
         '''
 
-        super().__init__(x_, y_)
+        self.x = x_
+        self.y = y_
+
         if not os.path.exists(path): 
             raise ValueError("Path does not exist!")
         elif os.path.splitext(path)[-1] not in [".png", ".jpg", ".bmp"]: 
@@ -453,16 +455,9 @@ class RasterImage(Component):
         imgTransform = Image.open(path)
         # Get image dimensions as fallback value for image bound
         imgW, imgH = imgTransform.size
-        if not wBound: 
-            wBound = imgW
-        if not hBound: 
-            hBound = imgH
+        thumbnailSize = (width or imgW, height or imgH)     # Use imgW, imgH if width, height are None (respectively)
         if antialias: 
-            imgTransform.thumbnail((wBound or imgW, hBound or imgH), Image.ANTIALIAS)
+            imgTransform.thumbnail(thumbnailSize, Image.ANTIALIAS)
         else: 
-            imgTransform.thumbnail((wBound or imgW, hBound or imgH))
+            imgTransform.thumbnail(thumbnailSize)
         self.img = imgTransform.convert("RGB")
-    
-    def draw(self, canvas: FrameCanvas):
-        canvas.SetImage(self.img, self.x, self.y)
-    
