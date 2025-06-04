@@ -140,12 +140,11 @@ class MyShell(Cmd):
         '''Stops a running module'''
         global modRunning, modThread
         if modRunning:
-            if modThread: modThread.stop()
+            if modThread: 
+                modThread.stop()
             clearMatrix()
             log.info("Module stopped.")
             modRunning = False
-        else: 
-            return
 
     def do_clearlog(self, arg):
         '''Clear logging file output'''
@@ -161,6 +160,7 @@ class MyShell(Cmd):
     def do_quit(self, arg):
         '''Exit the shell.'''
         print("Closing...")
+        self.do_stop(None)
         # Close secondary logging terminal
         log.info("End session.")
         return True  # Returning True ends the shell
