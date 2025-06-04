@@ -8,6 +8,9 @@ https://stackoverflow.com/questions/474528/how-to-repeatedly-execute-a-function-
 
 from threading import Timer
 
+import logging
+log = logging.getLogger(__name__)
+
 class ThreadLoop(object):
     def __init__(self, interval, function, *args, **kwargs):
         self._timer     = None
@@ -21,7 +24,11 @@ class ThreadLoop(object):
     def _run(self):
         self.is_running = False
         self.start()
-        self.function(*self.args, **self.kwargs)
+        try: 
+            self.function(*self.args, **self.kwargs)
+        except Exception as e: 
+            self.stop()
+            log.error(e)
 
     def start(self):
         if not self.is_running:
