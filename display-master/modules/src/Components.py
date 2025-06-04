@@ -378,13 +378,108 @@ class Text(Component):
         '''
         super().__init__(x_, y_)
         self.text = text_
+        if not font.endswith(".bdf"): 
+            raise ValueError("Font must be a .bdf file")
         self.font_path = FONTS_PATH + font       # Do we need this?
+        if not os.path.exists(self.font_path):
+            raise ValueError("Font path does not exist")
         self.font = graphics.Font()
         self.font.LoadFont(FONTS_PATH + font)
         self.font_color = graphics.Color(*color)
 
     def draw(self, canvas: FrameCanvas): 
-        textLen = graphics.DrawText(canvas, self.font, self.x, self.y, self.font_color, self.text)
+        return graphics.DrawText(canvas, self.font, self.x, self.y, self.font_color, self.text)
+
+class ScrollingText(Text):
+    '''Draws text to the display'''
+
+    # Define scrolling modes
+    ONCE = 0
+    LOOP = 1
+    BOUNCE = 2
+
+    @typechecked
+    def __init__(
+        self, x_: int, y_: int, text_: str, 
+        *, 
+        font: str = "basic/4x6.bdf",
+        color: tuple = (255, 255, 255),
+        speed: float = -1,
+        mode: int = ONCE,
+        delay: int = 0
+        ):
+        '''
+        Parameters
+        ------------
+        x_: int
+            x position (left-hand side)
+        y_: int
+            y position
+            N.B. position of TEXT BASELINE
+        text_: str
+            Text to be drawn
+        font: str
+            Path to font to use
+        color: tuple
+            Color of text
+        speed: float
+            Rate of scrolling (px/frame update)
+            Defaults to -1 (text moves 1 px left per frame)
+        mode: int
+            Scroll mode
+            Must be ONCE, LOOP, or BOUNCE
+        delay: int
+            No. of frame updates to wait between scrolling iterations
+            Iteration: 
+        ----------------
+        Other Attributes
+        ----------------
+        scroll_index: int
+            Number of frame updates executed (multiplied by rate to calculate new x-pos)
+        length: int
+            Length of string (in px) when printed
+            Updated on initial draw
+        '''
+        super().__init__(x_, y_, text_, font=font, color=color)
+        self.rate = speed
+        if mode not in [self.ONCE, self.LOOP, self.BOUNCE]:
+            raise ValueError("Scrolling mode must be ScrollingText.ONCE, ScrollingText.LOOP, or ScrollingText.BOUNCE")
+        self.mode = mode
+        self.delay = delay
+        self.scroll_index = 0
+        self.delay_count = 0
+
+    def draw(self, canvas: FrameCanvas): 
+        self.length = super().draw(canvas)
+        self.scroll_index += 1
+
+    def loop(self, canvas: FrameCanvas): 
+        if self.rate == 0: 
+            super().draw(canvas)
+            return
+        
+        # Check for active delay
+        if self.scroll_index == 0 and self.delay_count < self.delay: 
+            self.delay_count += 1
+            super().draw(canvas)
+            return
+        else: 
+            self.delay_count = 0
+
+        newPos = self.x + self.rate * self.scroll_index
+        # Test position; reset if needed
+        if (
+            (self.rate < 0 and newPos + self.length < 0)
+            or (self.rate > 0 and newPos > canvas.width)
+        ):
+            self.scroll_index = canvas.width / self.rate
+        graphics.DrawText(
+            canvas, self.font, 
+            newPos, 
+            self.y, self.font_color, self.text
+            )
+        self.scroll_index += 1
+        
 
 #endregion
 
