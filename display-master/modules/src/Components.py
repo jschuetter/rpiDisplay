@@ -386,5 +386,32 @@ class Text(Component):
     def draw(self, canvas: FrameCanvas): 
         textLen = graphics.DrawText(canvas, self.font, self.x, self.y, self.font_color, self.text)
 
-
 #endregion
+
+#region image components
+class Icon(Component): 
+    '''Draw a .bmp image to matrix'''
+
+    def __init__(self, x_: int, y_: int, path: str):
+        '''
+        Parameters: 
+        -------------
+        x_: int
+            x position
+        y_: int
+            y position
+        path: str
+            Path of .bmp file to use
+            N.B. must be in .bmp format
+        '''
+
+        super().__init__(x_, y_)
+        if not os.path.exists(path): 
+            raise ValueError("Path does not exist!")
+        elif not path.endswith(".bmp"): 
+            raise ValueError("Path must be an image in .bmp format")
+        self.path = path        # Do we need to store this?
+        self.icon = Image.open(path).convert("RGB")
+    
+    def draw(self, canvas: FrameCanvas):
+        canvas.SetImage(self.icon, self.x, self.y)
