@@ -113,8 +113,8 @@ class PrimitiveComponent(Component):
     @typechecked
     def __init__(self, x_: int, y_: int, w: int, h: int, 
                 *, 
-                fill: Union[tuple, None] = (255,255,255), 
-                stroke: Union[tuple, None] = (255,255,255), 
+                fill: [tuple, None] = (255,255,255), 
+                stroke: Optional[tuple] = None, 
                 weight: int = 1,
                 angle: int = 0):
         '''
@@ -353,6 +353,54 @@ class Line(PrimitiveComponent):
 #region text components
 class Text(Component):
     '''Draws text to the display'''
+
+    @typechecked
+    def __init__(
+        self, x_: int, y_: int, text_: str, 
+        *, 
+        font: str = "basic/4x6.bdf",
+        color: tuple = (255, 255, 255),
+        scoreColor: Optional[tuple] = None,
+        scoreWeight: Optional[int] = 1
+        ):
+        '''
+        Parameters
+        ------------
+        x_: int
+            x position (left-hand side)
+        y_: int
+            y position
+            N.B. position of TEXT BASELINE
+        text_: str
+            Text to be drawn
+        font: str
+            Path to font to use
+        color: tuple
+            Color of text
+        scoreColor: tuple
+            Color of underline or background
+        scoreWeight: int
+            Height or weight of underline or background
+        '''
+        super().__init__(x_, y_)
+        self.text = text_
+        self.font_path = FONTS_PATH + font       # Do we need this?
+        self.font = graphics.Font()
+        self.font.LoadFont(FONTS_PATH + font)
+        self.font_color = graphics.Color(*color)
+        self.background_color = scoreColor
+        self.background_height = scoreWeight
+
+    def draw(self, canvas: FrameCanvas): 
+        textLen = graphics.DrawText(canvas, self.font, self.x, self.y, self.font_color, self.text)
+        # If background color is set, draw rect behind text
+        if self.background_color: 
+            bg = Rect(
+                self.x, self.y-self.background_height, 
+                textLen, self.background_height, 
+                fill=self.background_color
+                )
+            bg.draw(canvas)
 
 
 #endregion
