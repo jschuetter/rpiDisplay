@@ -107,15 +107,7 @@ class PrimitiveComponent(Component):
         output = points + translate_matrix      # Translate to origin
         output = output @ rotation_matrix.T     # Rotate
         output = output - translate_matrix      # Translate back to original position
-        # floor = np.floor(output)
-        # ceil = np.ceil(output)
-        # print(type(output), type(floor), type(ceil))
         output = np.round(output)       # Round result to nearest integers
-        # output = np.concatenate((
-        #     np.floor(output).astype(int), 
-        #     np.ceil(output).astype(int)
-        # ))       # Round result to nearest integers
-        # output = np.unique(output)      # Remove duplicate points
         return set(map(tuple, output))
         
     @typechecked
@@ -614,14 +606,6 @@ class ScrollingText(Text):
             ):
                 # Change direction
                 self.direction_mult *= -1
-            # if self.rate < 0 and newPos + self.length < self.BOUNCE_LIMIT_RIGHT:
-            #     # Change direction
-            #     self.direction_mult *= -1
-            # elif self.rate > 0 and newPos > self.x:  # Left bounce limit: self.x
-            #     # Change direction
-            #     self.direction_mult *= -1
-            #     # Reset scroll_index
-            #     self.scroll_index = 0
 
         graphics.DrawText(
             canvas, self.font, 
