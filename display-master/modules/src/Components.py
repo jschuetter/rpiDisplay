@@ -34,6 +34,11 @@ from PIL import Image, ImageDraw
 import webcolors
 from pathlib import Path
 
+# Clock component
+from datetime import datetime as dt
+from datetime import tzinfo
+import pytz
+
 class Component():
     '''Parent class for all Component objects'''
 
@@ -426,12 +431,21 @@ class Line(PrimitiveComponent):
 class Text(Component):
     '''Draws text to the display'''
 
+    def adjustAlignment(self): 
+        if self.right_aligned: 
+            # Compute length of string when printed
+            totalLen = 0
+            for c in self.text: 
+                totalLen += self.font.CharacterWidth(ord(c))
+            self.x = self.x_og - totalLen        
+
     @typechecked
     def __init__(
         self, x_: int, y_: int, text_: str, 
         *, 
         font: str = "basic/4x6.bdf",
         color: tuple = (255, 255, 255),
+        rightAlign: bool = False,
         ):
         '''
         Parameters
@@ -447,8 +461,11 @@ class Text(Component):
             Path to font to use
         color: tuple
             Color of text
+        rightAlign: bool
+            Whether to align text to right
         '''
         super().__init__(x_, y_)
+        self.x_og = x_      # Store original x value to allow right-aligning
         self.text = text_
         if not font.endswith(".bdf"): 
             raise ValueError("Font must be a .bdf file")
@@ -458,6 +475,8 @@ class Text(Component):
         self.font = graphics.Font()
         self.font.LoadFont(FONTS_PATH + font)
         self.font_color = graphics.Color(*color)
+        self.right_aligned = rightAlign
+        self.adjustAlignment()
 
     def draw(self, canvas: FrameCanvas): 
         return graphics.DrawText(canvas, self.font, self.x, self.y, self.font_color, self.text)
@@ -486,6 +505,7 @@ class ScrollingText(Text):
         *, 
         font: str = "basic/4x6.bdf",
         color: tuple = (255, 255, 255),
+        rightAlign: bool = False,
         speed: float = -1,
         mode: int = ONCE,
         delay: int = 0, 
@@ -505,6 +525,8 @@ class ScrollingText(Text):
             Path to font to use
         color: tuple
             Color of text
+        rightAlign: bool
+            Whether to align text to right
         speed: float
             Rate of scrolling (px/frame update)
             Defaults to -1 (text moves 1 px left per frame)
@@ -530,7 +552,7 @@ class ScrollingText(Text):
         direction_mult: int
             Rate multiplier to change direction of scrolling (for BOUNCE mode)
         '''
-        super().__init__(x_, y_, text_, font=font, color=color)
+        super().__init__(x_, y_, text_, font=font, color=color, rightAlign=rightAlign)
         self.rate = speed
         if mode not in [self.ONCE, self.LOOP, self.BOUNCE]:
             raise ValueError("Scrolling mode must be ScrollingText.ONCE, ScrollingText.LOOP, or ScrollingText.BOUNCE")
@@ -548,7 +570,7 @@ class ScrollingText(Text):
     def loop(self, canvas: FrameCanvas): 
         # Ignore rest of function if scroll rate is 0
         if self.rate == 0: 
-            super().draw(canvas)
+            self.draw(canvas)
             return
         
         newPos = self.x + self.rate * self.scroll_index
@@ -560,7 +582,6 @@ class ScrollingText(Text):
             and self.delay_count < self.delay
             ): 
             self.delay_count += 1
-            # super().draw(canvas)
             graphics.DrawText(
                 canvas, self.font, 
                 newPos, 
@@ -593,7 +614,7 @@ class ScrollingText(Text):
                 # Add self.direction_mult to cancel out increment at end of function call
                 # self.scroll_index = 0 + self.direction_mult
                 self.scroll_index = 0
-                super().draw(canvas)
+                self.draw(canvas)
                 return
 
         # BOUNCE mode
@@ -700,3 +721,62 @@ class RasterImage(Icon):
         else: 
             imgTransform.thumbnail(thumbnailSize)
         self.img = imgTransform.convert("RGB")
+
+#endregion
+
+#region complex components
+class DateTimeDisplay(Text): 
+    '''A simple clock or date (or both) display'''        
+
+    @typechecked
+    def __init__(
+        self, x_: int, y_: int,
+        *, 
+        font: str = "basic/4x6.bdf",
+        color: tuple = (255, 255, 255),
+        rightAlign: bool = True,
+        dtFormat: str = "%-I:%M",
+        timezone: tzinfo = pytz.timezone("US/Eastern"),
+        ):
+        '''
+        Parameters
+        ------------
+        x_: int
+            x position (left-hand side)
+        y_: int
+            y position
+            N.B. position of TEXT BASELINE
+        text_: str
+            Text to be drawn
+        font: str
+            Path to font to use
+        color: tuple
+            Color of text
+        rightAlign: bool
+            Text aligns to right if True
+        dtFormat: str
+            Format of datetime string to print out
+        timezone: tzinfo
+            Timezone object specifying timezone to show
+            Uses pytz library
+        -----------------
+        Other Attributes
+        -----------------
+        zero_width: int
+            Width of zero character in px
+            Used to adjust for # of zero characters removed
+        '''
+        initText = dt.now(tz=timezone).strftime(dtFormat)
+        super().__init__(x_, y_, initText, font=font, color=color, rightAlign=rightAlign)
+        self.format = dtFormat
+        self.tz = timezone
+
+
+    def loop(self, canvas: FrameCanvas): 
+        # Update text
+        now = dt.now(tz=self.tz)
+        self.text = now.strftime(self.format)
+        self.adjustAlignment()
+        self.draw(canvas)
+
+#endregion
