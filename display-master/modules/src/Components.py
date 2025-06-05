@@ -107,7 +107,15 @@ class PrimitiveComponent(Component):
         output = points + translate_matrix      # Translate to origin
         output = output @ rotation_matrix.T     # Rotate
         output = output - translate_matrix      # Translate back to original position
+        # floor = np.floor(output)
+        # ceil = np.ceil(output)
+        # print(type(output), type(floor), type(ceil))
         output = np.round(output)       # Round result to nearest integers
+        # output = np.concatenate((
+        #     np.floor(output).astype(int), 
+        #     np.ceil(output).astype(int)
+        # ))       # Round result to nearest integers
+        # output = np.unique(output)      # Remove duplicate points
         return set(map(tuple, output))
         
     @typechecked
@@ -189,7 +197,7 @@ class Rect(PrimitiveComponent):
     '''Draws a rectangle.'''
 
     def getFillPts(self):
-        # If do_fill is False, return empty
+        # If fill_color is False, return empty
         if not self.fill_color: 
             self.fill_pts = ()
             return
@@ -206,8 +214,8 @@ class Rect(PrimitiveComponent):
         self.fill_pts = self.rotate(pts_array, self.rotation)
 
     def getStrokePts(self): 
-        # If stroke weight is 0, return empty
-        if self.stroke_weight == 0: 
+        # If stroke_color is False, return empty
+        if not self.stroke_color: 
             self.stroke_pts = ()
             return
 
@@ -289,6 +297,78 @@ class Ellipse(PrimitiveComponent):
         self.getAllPts()
     def getStrokePts(self): 
         self.getAllPts()
+
+class RightTriangle(PrimitiveComponent): 
+    '''Draw a right triangle with the right angle in the bottom-left'''
+    
+    tolerance = 0
+
+    def getFillPts(self): 
+        # If fill_color is False, return empty
+        if not self.fill_color: 
+            self.fill_pts = ()
+            return
+
+        # Create Numpy grid to match matrix
+        # Get canvas width & height from environment vars
+        # Subtract 1 to account for indexing at 0
+        canvasH = int(os.getenv("MATRIX_ROWS", 32)) - 1
+        canvasW = int(os.getenv("MATRIX_COLS", 32)) - 1
+        gridX, gridY = np.ogrid[:canvasW, :canvasH]
+
+        slope = self.height / self.width
+
+        # Trim value
+        TOLERANCE = -0.99
+
+        fillMaskHypotenuse = gridY - slope * gridX >= self.stroke_weight + TOLERANCE
+        fillMaskLeft = gridX >= self.stroke_weight
+        fillMaskBottom = gridY <= self.height - self.stroke_weight
+        fillPts = np.argwhere(fillMaskHypotenuse & fillMaskLeft & fillMaskBottom)
+        # Translate mask to shape position
+        fillPts += np.array([self.x, self.y])
+        # fillPtsArray = np.array(list(fillPts))
+        self.fill_pts = self.rotate(fillPts, self.rotation)
+        
+    def getStrokePts(self): 
+        # If stroke_color is False, return empty
+        if not self.stroke_color: 
+            self.stroke_pts = ()
+            return
+
+        # Create Numpy grid to match matrix
+        # Get canvas width & height from environment vars
+        # Subtract 1 to account for indexing at 0
+        canvasH = int(os.getenv("MATRIX_ROWS", 32)) - 1
+        canvasW = int(os.getenv("MATRIX_COLS", 32)) - 1
+        gridX, gridY = np.ogrid[:canvasW, :canvasH]
+
+        slope = self.height / self.width
+
+        # Trim values to make things work right
+        OUTER_SHIFT = self.stroke_weight - 1
+        TOLERANCE = 0.5
+
+        strokeMaskOuter = (gridY - slope * gridX > -self.stroke_weight + OUTER_SHIFT)
+        strokeMaskHypotenuse = strokeMaskOuter & \
+            (gridY - slope * gridX <= 0 + OUTER_SHIFT + TOLERANCE) & \
+            (gridY >= 0) & (gridY <= self.height)
+        strokeMaskLeft = (gridX >= 0) & \
+            (gridX < self.stroke_weight) & \
+            (gridY <= self.height) & \
+            strokeMaskOuter
+            # (gridY >= 0)
+        strokeMaskBottom = (gridY <= self.height) & \
+            (gridY > self.height - self.stroke_weight) & \
+            (gridX >= 0) & \
+            strokeMaskOuter
+            # (gridX <= self.width)
+        strokePts = np.argwhere(strokeMaskHypotenuse | strokeMaskLeft | strokeMaskBottom)
+        # Translate mask to shape position
+        strokePts += np.array([self.x, self.y])
+        self.stroke_pts = self.rotate(strokePts, self.rotation)
+
+
 
 class Line(PrimitiveComponent): 
     '''Draws a line.'''
