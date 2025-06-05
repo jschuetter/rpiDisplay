@@ -3,7 +3,7 @@ An RGB matrix OS/driver for Raspberry Pi -- work in progress
 
 ## Setup requirements
 There are two options for installing dependencies: 
-1) Run setup.sh (assumes Python 3!) in the project root dir, or 
+1) Run setup.sh (assumes Python 3 is already installed!) in the project root dir, or 
 2) Follow below instructions: 
 		- Use `pip install` or `pip3 install` to install all dependencies in `requirements.txt`
 		- Follow the rgbmatrix package installation instructions at https://github.com/hzeller/rpi-rgb-led-matrix/tree/master/bindings/python, using rgbmatrix-src as the root directory
