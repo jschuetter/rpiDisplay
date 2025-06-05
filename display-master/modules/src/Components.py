@@ -398,6 +398,16 @@ class ScrollingText(Text):
     LOOP = 1
     BOUNCE = 2
 
+    # Constant defining right-hand scroll limit
+    # Currently set to canvas width
+    # Left limit set by self.x
+    # Change this to dynamically-allocated bounding box length for 
+    # BoundedScrollingText (add to self.x to get x-value)
+    SCROLL_LIMIT_RIGHT = 64
+    # Only used for ONCE mode - to allow scrolling off display
+    # Other modes use self.x for left limit
+    # SCROLL_LIMIT_LEFT = 0
+
     @typechecked
     def __init__(
         self, x_: int, y_: int, text_: str, 
@@ -406,7 +416,8 @@ class ScrollingText(Text):
         color: tuple = (255, 255, 255),
         speed: float = -1,
         mode: int = ONCE,
-        delay: int = 0
+        delay: int = 0, 
+        spacing: int = 0
         ):
         '''
         Parameters
@@ -428,9 +439,14 @@ class ScrollingText(Text):
         mode: int
             Scroll mode
             Must be ONCE, LOOP, or BOUNCE
+            N.B. LOOP mode only works if text is longer than bounding box
         delay: int
             No. of frame updates to wait between scrolling iterations
-            Iteration: 
+            ONCE & LOOP modes: scrolls around once, then pauses at original position
+            BOUNCE mode: pauses at each end of text before changing direction
+        spacing: int
+            No. of px space between iterations in LOOP mode
+            Has no effect in ONCE or BOUNCE modes
         ----------------
         Other Attributes
         ----------------
@@ -439,6 +455,8 @@ class ScrollingText(Text):
         length: int
             Length of string (in px) when printed
             Updated on initial draw
+        direction_mult: int
+            Rate multiplier to change direction of scrolling (for BOUNCE mode)
         '''
         super().__init__(x_, y_, text_, font=font, color=color)
         self.rate = speed
@@ -446,39 +464,101 @@ class ScrollingText(Text):
             raise ValueError("Scrolling mode must be ScrollingText.ONCE, ScrollingText.LOOP, or ScrollingText.BOUNCE")
         self.mode = mode
         self.delay = delay
+        self.spacing = spacing
         self.scroll_index = 0
         self.delay_count = 0
+        self.direction_mult = 1
 
     def draw(self, canvas: FrameCanvas): 
         self.length = super().draw(canvas)
         self.scroll_index += 1
 
     def loop(self, canvas: FrameCanvas): 
+        # Ignore rest of function if scroll rate is 0
         if self.rate == 0: 
             super().draw(canvas)
             return
         
+        newPos = self.x + self.rate * self.scroll_index
+
         # Check for active delay
-        if self.scroll_index == 0 and self.delay_count < self.delay: 
+        if (
+            (self.scroll_index == 0
+            or self.mode == self.BOUNCE and newPos + self.length <= self.SCROLL_LIMIT_RIGHT)
+            and self.delay_count < self.delay
+            ): 
             self.delay_count += 1
-            super().draw(canvas)
+            # super().draw(canvas)
+            graphics.DrawText(
+                canvas, self.font, 
+                newPos, 
+                self.y, self.font_color, self.text
+            )
             return
+
         else: 
             self.delay_count = 0
 
-        newPos = self.x + self.rate * self.scroll_index
-        # Test position; reset if needed
-        if (
-            (self.rate < 0 and newPos + self.length < 0)
-            or (self.rate > 0 and newPos > canvas.width)
-        ):
-            self.scroll_index = canvas.width / self.rate
+        # Test position; reset/change direction if needed
+        # ONCE mode
+        if self.mode == self.ONCE:
+            # Test whether text has left display
+            if (
+                (self.rate < 0 and newPos + self.length < 0) # If a bounding box is used, set last value to self.x instead of 0!
+                or (self.rate > 0 and newPos > self.SCROLL_LIMIT_RIGHT)
+            ):
+                # Set scroll index to far end of display
+                self.scroll_index = self.SCROLL_LIMIT_RIGHT / self.rate
+
+        # LOOP mode
+        elif self.mode == self.LOOP:
+            # Test whether *second string* has returned to original position
+            if (
+                (self.rate < 0 and newPos + (self.length + self.spacing) < 0)
+                or (self.rate > 0 and newPos - (self.length + self.spacing)  > 0)
+            ):
+                # Reset scroll index
+                # Add self.direction_mult to cancel out increment at end of function call
+                # self.scroll_index = 0 + self.direction_mult
+                self.scroll_index = 0
+                super().draw(canvas)
+                return
+
+        # BOUNCE mode
+        else:  
+            # Test whether text has reached extreme end of display
+            direction = self.rate * self.direction_mult
+            if (
+                (direction < 0 and newPos + self.length < self.SCROLL_LIMIT_RIGHT)
+                or (direction > 0 and newPos > self.x)  # Left bounce limit: self.x
+            ):
+                # Change direction
+                self.direction_mult *= -1
+            # if self.rate < 0 and newPos + self.length < self.BOUNCE_LIMIT_RIGHT:
+            #     # Change direction
+            #     self.direction_mult *= -1
+            # elif self.rate > 0 and newPos > self.x:  # Left bounce limit: self.x
+            #     # Change direction
+            #     self.direction_mult *= -1
+            #     # Reset scroll_index
+            #     self.scroll_index = 0
+
         graphics.DrawText(
             canvas, self.font, 
             newPos, 
             self.y, self.font_color, self.text
             )
-        self.scroll_index += 1
+        # If mode is LOOP, draw second string (to avoid blank space) after 
+        # (later in scroll pattern) original string
+        if self.mode == self.LOOP: 
+            graphics.DrawText(
+                canvas, self.font, 
+                newPos - (self.length + self.spacing) * np.sign(self.rate), # Multiply by sign of rate to ensure proper placement
+                self.y, self.font_color, self.text
+                )
+
+        # Multiply increment by direction_mult to allow bouncing
+        self.scroll_index += 1 * self.direction_mult
         
 
 #endregion
