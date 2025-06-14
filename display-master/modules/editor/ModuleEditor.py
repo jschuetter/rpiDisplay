@@ -264,8 +264,8 @@ class ModuleEditor(cmd.Cmd):
 
     def complete_ls(self, text, line, begidx, endidx):
         # Ignore after 1st argument
-        if not self.working or (len(line.split()) + line.endswith(" ") > 2):
-            return []
+        # if not self.working or (len(line.split()) + line.endswith(" ") > 2):
+        #     return []
 
         valid = [el.name.value for el in self.working["elements"]]
         return [s for s in valid if s.startswith(text)]
@@ -486,7 +486,10 @@ class ModuleEditor(cmd.Cmd):
     def do_rm(self, line):
         '''Remove existing element or comp
         
-        Usage: rm [obj]
+        Usage: rm [-y] [obj]
+
+        -y
+            Skip confirmation
         
         obj: str
             Name of object to remove'''
@@ -495,6 +498,12 @@ class ModuleEditor(cmd.Cmd):
         if not args: 
             self.do_help("rm")
             return
+
+        skipConfirm = False
+
+        if args[0] == "-y":
+            skipConfirm = True
+            del args[0]
 
         if not self.working: 
             # If no open comp, remove composition file
@@ -505,24 +514,44 @@ class ModuleEditor(cmd.Cmd):
                 return
             # Confirm deletion
             while True:
-                confirm = input(f"Remove comp {args[0]}? (y/n)")
-                confirm = confirm.partition(" ")[0].lower()
-                if confirm in ["y", "yes"]: 
+                if not skipConfirm: 
+                    confirm = input(f"Remove comp {args[0]}? (y/n)")
+                    confirm = confirm.partition(" ")[0].lower()
+                    if confirm in ["y", "yes"]: 
+                        os.remove(srcPath)
+                        if not os.path.exists(srcPath):
+                            print(f"Removed {args[0]}.")
+                        else:
+                            print("Failed to remove.")
+                        return
+                    elif confirm in ["n", "no"]:
+                        return 
+                else: 
                     os.remove(srcPath)
                     if not os.path.exists(srcPath):
                         print(f"Removed {args[0]}.")
                     else:
                         print("Failed to remove.")
                     return
-                elif confirm in ["n", "no"]:
-                    return 
         else: 
+            # If composition is open, look for matching element
             for el in self.working["elements"]:
                 if el.name.value == args[0]:
                     while True:
-                        confirm = input(f"Remove element {args[0]}? (y/n)")
-                        confirm = confirm.partition(" ")[0].lower()
-                        if confirm in ["y", "yes"]: 
+                        if not skipConfirm: 
+                            confirm = input(f"Remove element {args[0]}? (y/n)")
+                            confirm = confirm.partition(" ")[0].lower()
+                            if confirm in ["y", "yes"]: 
+                                self.working["elements"].remove(el)
+                                if el not in self.working["elements"]:
+                                    print(f"Removed {args[0]}.")
+                                else:
+                                    print("Failed to remove.")
+                                self.update_all()
+                                return
+                            elif confirm in ["n", "no"]:
+                                return 
+                        else: 
                             self.working["elements"].remove(el)
                             if el not in self.working["elements"]:
                                 print(f"Removed {args[0]}.")
@@ -530,8 +559,6 @@ class ModuleEditor(cmd.Cmd):
                                 print("Failed to remove.")
                             self.update_all()
                             return
-                        elif confirm in ["n", "no"]:
-                            return 
             print("Object not found.\n")
             self.do_help("rm")
             return
