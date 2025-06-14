@@ -55,8 +55,6 @@ class BasicClock:
         # Create cache canvas
         self.matrix = matrix
         self.nextCanvas = self.matrix.CreateFrameCanvas()
-        log.debug(matrix)
-        log.debug(self.matrix)
 
     # Continuously run on loop
     def draw(self):
