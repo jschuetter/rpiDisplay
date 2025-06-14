@@ -1,13 +1,17 @@
 #!/bin/python
 '''
 Editor Module
-Version 0.2
+Version 1.1
 Jacob Schuetter
 
 Module history: 
 v0.1: 12 Feb 2025
 v0.2: 15 Feb 2025
 - Moved cmdloop() call to draw() method (for consistency across modules)
+v1.0: 20 May 2025
+- First fully-functioning version with basic Element types
+v1.1: 14 Jun 2025
+- Misc. QOL improvements
 '''
 
 # RGB Matrix dependencies
