@@ -489,23 +489,12 @@ class ScrollingText(Text):
     LOOP = 1
     BOUNCE = 2
 
-    # Constant defining right-hand scroll limit
-    # Currently set to canvas width
-    # Left limit set by self.x
-    # Change this to dynamically-allocated bounding box length for 
-    # BoundedScrollingText (add to self.x to get x-value)
-    SCROLL_LIMIT_RIGHT = 64
-    # Only used for ONCE mode - to allow scrolling off display
-    # Other modes use self.x for left limit
-    # SCROLL_LIMIT_LEFT = 0
-
     @typechecked
     def __init__(
         self, x_: int, y_: int, text_: str, 
         *, 
         font: str = "basic/4x6.bdf",
         color: tuple = (255, 255, 255),
-        rightAlign: bool = False,
         speed: float = -1,
         mode: int = ONCE,
         delay: int = 0, 
@@ -525,8 +514,6 @@ class ScrollingText(Text):
             Path to font to use
         color: tuple
             Color of text
-        rightAlign: bool
-            Whether to align text to right
         speed: float
             Rate of scrolling (px/frame update)
             Defaults to -1 (text moves 1 px left per frame)
@@ -552,7 +539,7 @@ class ScrollingText(Text):
         direction_mult: int
             Rate multiplier to change direction of scrolling (for BOUNCE mode)
         '''
-        super().__init__(x_, y_, text_, font=font, color=color, rightAlign=rightAlign)
+        super().__init__(x_, y_, text_, font=font, color=color)
         self.rate = speed
         if mode not in [self.ONCE, self.LOOP, self.BOUNCE]:
             raise ValueError("Scrolling mode must be ScrollingText.ONCE, ScrollingText.LOOP, or ScrollingText.BOUNCE")
@@ -566,6 +553,7 @@ class ScrollingText(Text):
     def draw(self, canvas: FrameCanvas): 
         self.length = super().draw(canvas)
         self.scroll_index += 1
+        return self.length
 
     def loop(self, canvas: FrameCanvas): 
         # Ignore rest of function if scroll rate is 0
@@ -578,7 +566,7 @@ class ScrollingText(Text):
         # Check for active delay
         if (
             (self.scroll_index == 0
-            or self.mode == self.BOUNCE and newPos + self.length <= self.SCROLL_LIMIT_RIGHT)
+            or self.mode == self.BOUNCE and newPos + self.length <= canvas.width)
             and self.delay_count < self.delay
             ): 
             self.delay_count += 1
@@ -598,10 +586,10 @@ class ScrollingText(Text):
             # Test whether text has left display
             if (
                 (self.rate < 0 and newPos + self.length < 0) # If a bounding box is used, set last value to self.x instead of 0!
-                or (self.rate > 0 and newPos > self.SCROLL_LIMIT_RIGHT)
+                or (self.rate > 0 and newPos > canvas.width)
             ):
                 # Set scroll index to far end of display
-                self.scroll_index = self.SCROLL_LIMIT_RIGHT / self.rate
+                self.scroll_index = canvas.width / self.rate
 
         # LOOP mode
         elif self.mode == self.LOOP:
@@ -622,7 +610,7 @@ class ScrollingText(Text):
             # Test whether text has reached extreme end of display
             direction = self.rate * self.direction_mult
             if (
-                (direction < 0 and newPos + self.length < self.SCROLL_LIMIT_RIGHT)
+                (direction < 0 and newPos + self.length < canvas.width)
                 or (direction > 0 and newPos > self.x)  # Left bounce limit: self.x
             ):
                 # Change direction
@@ -778,5 +766,145 @@ class DateTimeDisplay(Text):
         self.text = now.strftime(self.format)
         self.adjustAlignment()
         self.draw(canvas)
+
+class TickerText(ScrollingText):
+    '''A scrolling text box that displays multiple messages'''
+
+    @typechecked
+    def __init__(
+        self, x_: int, y_: int, messages_: Union[list, tuple, set], 
+        *, 
+        font: str = "basic/4x6.bdf",
+        color: tuple = (255, 255, 255),
+        speed: float = -1,
+        spacing: int = 0, 
+        wrap: bool = True
+        ):
+        '''
+        Parameters
+        ------------
+        x_: int
+            x position (left-hand side)
+        y_: int
+            y position
+            N.B. position of TEXT BASELINE
+        text_: str
+            Text to be drawn
+        font: str
+            Path to font to use
+        color: tuple
+            Color of text
+        speed: float
+            Rate of scrolling (px/frame update)
+            Defaults to -1 (text moves 1 px left per frame)
+        spacing: int
+            No. of px space between iterations in LOOP mode
+            Has no effect in ONCE or BOUNCE modes
+        ----------------
+        Other Attributes
+        ----------------
+        msg_index: int
+            Index of message currently being printed
+        msg_x: list(int)
+            x-position of each message string, updated individually at runtime
+        msg_len: list(int)
+            Lengths of each message
+            Updated as messages are printed
+        next_msg_len: int
+            Length of next message printed
+            Used to test when to print next message
+        update_msg_idx: list(int)
+            List of message indices to update at each frame update
+            Indices are added to or removed from this list at every frame update as
+            they enter or leave the display
+        '''
+        for m in messages_: 
+            if not isinstance(m, str): 
+                raise ValueError("Messages must be strings!")
+
+        super().__init__(x_, y_, messages_[0], font=font, color=color,
+            speed=speed, spacing=spacing)
+        self.wrap = wrap
+        self.messages = messages_
+        self.msg_index = 0
+        self.msg_x = [0] * len(messages_)
+        self.msg_len = [0] * len(messages_)
+        # self.update_msg_idx = [0]
+        self.first_idx = 0
+        self.last_idx = 0
+
+    def draw(self, canvas: FrameCanvas): 
+        self.msg_len[0] = super().draw(canvas)
+        self.msg_x[0] += self.rate
+        self.msg_x[1] = self.msg_x[0] + self.msg_len[0] + self.spacing
+        # self.update_msg_idx = [0, 1]
+        return self.msg_len[0]
+
+    def loop(self, canvas: FrameCanvas): 
+        # Ignore rest of function if scroll rate is 0
+        if self.rate == 0: 
+            self.draw(canvas)
+            return
+        
+        # Test whether next message needs to be displayed
+        if (
+            (
+                self.rate < 0 
+                and self.msg_x[self.last_idx] + self.msg_len[self.last_idx] < canvas.width - self.spacing
+            ) or (
+                self.rate > 0 and self.msg_x[self.last_idx] > self.spacing
+            )
+        ): 
+            # If next message needs to be printed, print first, then add to focus list
+            nextMsg = self.last_idx + 1
+            if nextMsg >= len(self.messages): 
+                nextMsg = 0
+            self.msg_x[nextMsg] = self.msg_x[self.last_idx] + self.msg_len[self.last_idx] + self.spacing
+            # self.msg_len[nextMsg] = graphics.DrawText(
+            #     canvas, self.font, 
+            #     self.msg_x[nextMsg], 
+            #     self.y, self.font_color, self.messages[nextMsg]
+            # )
+            # self.msg_x[nextMsg] += self.rate
+            self.last_idx = nextMsg
+
+        # Test whether first msg is still in frame
+        if (
+            (self.rate < 0 and self.msg_x[self.first_idx] + self.msg_len[self.first_idx] < 0) # If a bounding box is used, set last value to self.x instead of 0!
+            or (self.rate > 0 and self.msg_x[self.first_idx] > canvas.width)
+        ):
+            # If message has left frame, stop drawing and remove from update_msg_idx
+            self.first_idx += 1
+            if self.first_idx >= len(self.messages): 
+                self.first_idx = 0
+
+        # Draw messages
+
+        idx = self.first_idx        # Loop index
+
+        # Define check value for last index to allow looping 
+        # around to beginning of messages
+        lastIdxCheckVal = self.last_idx + 1    # If last_idx does not wrap, check val = last_idx
+        if self.last_idx < self.first_idx:  # If last_idx does wrap, add first_idx
+            lastIdxCheckVal += self.first_idx  
+            if self.wrap: 
+                lastIdxCheckVal += 1        # Add 1 to avoid wraparound-to-zero corner case
+
+        while idx < lastIdxCheckVal:
+            # Wrap idx value around to match message indices
+            idxMod = idx % len(self.messages)
+
+            self.msg_len[idxMod] = graphics.DrawText(
+                canvas, self.font, 
+                self.msg_x[idxMod], 
+                self.y, self.font_color, self.messages[idxMod]
+                )
+            self.msg_x[idxMod] += self.rate
+            idx += 1
+
+        # Update index list
+        # self.update_msg_idx = [i for i in self.update_msg_idx if i not in idxToRemove]
+        # self.update_msg_idx.extend(idxToAdd)
+        
 
 #endregion
