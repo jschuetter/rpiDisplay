@@ -12,32 +12,28 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from config import FONTS_PATH
 # import Components
 from Components import *
+from modules.Module import Module
 
 # Logging
 import logging
 log = logging.getLogger(__name__)
 
-class TestModule: 
-    # Define loop delay constant (in seconds)
-    delay = 1
-    doloop = 0
+class TestModule(Module): 
 
-    def __init__(self, matrix):
-        # Create cache canvas
-        self.matrix = matrix
-        self.nextCanvas = self.matrix.CreateFrameCanvas()
+    def __init__(self, matrix, canvas):
+        super().__init__(matrix, canvas, doLoop=False, delay=1)
         self.components = [
             # Add components here!
         ]
 
     def draw(self):
-        self.nextCanvas.Clear()
+        self.canvas.Clear()
         for c in self.components: 
-            c.draw(self.nextCanvas)
-        self.matrix.SwapOnVSync(self.nextCanvas)
+            c.draw(self.canvas)
+        self.matrix.SwapOnVSync(self.canvas)
 
     def loop(self):
-        self.nextCanvas.Clear()
+        self.canvas.Clear()
         for c in self.components: 
             c.loop()
-        self.matrix.SwapOnVSync(self.nextCanvas)
+        self.matrix.SwapOnVSync(self.canvas)
