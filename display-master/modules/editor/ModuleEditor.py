@@ -8,7 +8,7 @@ import cmd
 from modules.src import Elements
 from ElementEditor import ElementEditor
 import cli
-from cli import parse, print_props
+from cli import parse
 
 import os, re, json
 import logging
@@ -220,33 +220,51 @@ class ModuleEditor(cmd.Cmd):
     def do_ls(self, line):
         '''Print list of elements in current directory
         
-        Usage: ls [?obj]
+        Usage: ls [-l] [?obj]
         
+        -l
+            Lists properties of object(s) queried
+
         obj: str (optional)
             Name of object to print
             Prints object properties'''
         
         args = parse(line)
+        doPrintProps = False
+
+        # Capture options
+        if args: 
+            if args[0] == "-l": 
+                doPrintProps = True
+                del args[0]
 
         if not args: 
             if not self.working: 
                 # If no open comp, print composition files
                 print(*[os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)], sep="\t\t")
             else: 
-                print(*[el.name.value for el in self.working["elements"]], sep="\t\t")
+                # Else, print elements
+                if doPrintProps:    # Print all property values if option is selected
+                    for el in self.working["elements"]: 
+                        print(el.name.value)
+                        el.print_props() 
+                        print()     # Add extra line after each element
+                else: 
+                    print(*[el.name.value for el in self.working["elements"]], sep="\t\t")
             return
         else: 
             for el in self.working["elements"]:
                 if el.name.value == args[0]:
-                    print_props(el)
+                    el.print_props()
+                    print()
                     return
         print("Object not found.\n")
         self.do_help("ls")
         return
 
     def complete_ls(self, text, line, begidx, endidx):
-        # Ignore after 1st argument
-        if not self.working or (len(line.split()) + line.endswith(" ") > 2):
+        # Ignore after 2nd argument
+        if not self.working or (len(line.split()) + line.endswith(" ") > 3):
             return []
 
         valid = [el.name.value for el in self.working["elements"]]
@@ -468,7 +486,10 @@ class ModuleEditor(cmd.Cmd):
     def do_rm(self, line):
         '''Remove existing element or comp
         
-        Usage: rm [obj]
+        Usage: rm [-y] [obj]
+
+        -y
+            Skip confirmation
         
         obj: str
             Name of object to remove'''
@@ -477,6 +498,12 @@ class ModuleEditor(cmd.Cmd):
         if not args: 
             self.do_help("rm")
             return
+
+        skipConfirm = False
+
+        if args[0] == "-y":
+            skipConfirm = True
+            del args[0]
 
         if not self.working: 
             # If no open comp, remove composition file
@@ -487,24 +514,44 @@ class ModuleEditor(cmd.Cmd):
                 return
             # Confirm deletion
             while True:
-                confirm = input(f"Remove comp {args[0]}? (y/n)")
-                confirm = confirm.partition(" ")[0].lower()
-                if confirm in ["y", "yes"]: 
+                if not skipConfirm: 
+                    confirm = input(f"Remove comp {args[0]}? (y/n)")
+                    confirm = confirm.partition(" ")[0].lower()
+                    if confirm in ["y", "yes"]: 
+                        os.remove(srcPath)
+                        if not os.path.exists(srcPath):
+                            print(f"Removed {args[0]}.")
+                        else:
+                            print("Failed to remove.")
+                        return
+                    elif confirm in ["n", "no"]:
+                        return 
+                else: 
                     os.remove(srcPath)
                     if not os.path.exists(srcPath):
                         print(f"Removed {args[0]}.")
                     else:
                         print("Failed to remove.")
                     return
-                elif confirm in ["n", "no"]:
-                    return 
         else: 
+            # If composition is open, look for matching element
             for el in self.working["elements"]:
                 if el.name.value == args[0]:
                     while True:
-                        confirm = input(f"Remove element {args[0]}? (y/n)")
-                        confirm = confirm.partition(" ")[0].lower()
-                        if confirm in ["y", "yes"]: 
+                        if not skipConfirm: 
+                            confirm = input(f"Remove element {args[0]}? (y/n)")
+                            confirm = confirm.partition(" ")[0].lower()
+                            if confirm in ["y", "yes"]: 
+                                self.working["elements"].remove(el)
+                                if el not in self.working["elements"]:
+                                    print(f"Removed {args[0]}.")
+                                else:
+                                    print("Failed to remove.")
+                                self.update_all()
+                                return
+                            elif confirm in ["n", "no"]:
+                                return 
+                        else: 
                             self.working["elements"].remove(el)
                             if el not in self.working["elements"]:
                                 print(f"Removed {args[0]}.")
@@ -512,8 +559,6 @@ class ModuleEditor(cmd.Cmd):
                                 print("Failed to remove.")
                             self.update_all()
                             return
-                        elif confirm in ["n", "no"]:
-                            return 
             print("Object not found.\n")
             self.do_help("rm")
             return
@@ -521,8 +566,8 @@ class ModuleEditor(cmd.Cmd):
     def complete_rm(self, text, line, begidx, endidx):
         # Complete comp names if comp is open; else complete element names
         if not self.working:
-            # Ignore after first argument
-            if len(line.split()) + line.endswith(" ") > 2: 
+            # Ignore after 2nd argument
+            if len(line.split()) + line.endswith(" ") > 3: 
                 return []
             
             valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
@@ -597,6 +642,9 @@ class ModuleEditor(cmd.Cmd):
         self.canvas.Clear()
         self.matrix.SwapOnVSync(self.canvas)
         return True 
+
+    # Alias do_exit
+    do_quit = do_exit
 
     #endregion
 

@@ -325,14 +325,8 @@ class ElementEditor(cmd.Cmd):
         
         Usage: ls'''
 
-        for (prop, data) in vars(self.obj).items(): 
-            try: 
-                print(f"\t{prop}: {data.value}")
-            except AttributeError as ae: 
-                print(f"\t{prop}: {data}")
-                # log.warning(ae)
-        return
-
+        self.obj.print_props()
+        
     def do_done(self, line):
         '''Exit ModuleEditor CLI
         

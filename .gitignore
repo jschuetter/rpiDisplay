@@ -161,3 +161,4 @@ display-master/.swp
 display-master/modules/editor/srcFiles/
 keebTest.py
 display-master/modules/testmodule.py
+.vscode/
