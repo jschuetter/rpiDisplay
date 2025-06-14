@@ -598,6 +598,9 @@ class ModuleEditor(cmd.Cmd):
         self.matrix.SwapOnVSync(self.canvas)
         return True 
 
+    # Alias do_exit
+    do_quit = do_exit
+
     #endregion
 
 
