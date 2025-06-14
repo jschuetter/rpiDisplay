@@ -263,9 +263,9 @@ class ModuleEditor(cmd.Cmd):
         return
 
     def complete_ls(self, text, line, begidx, endidx):
-        # Ignore after 1st argument
-        # if not self.working or (len(line.split()) + line.endswith(" ") > 2):
-        #     return []
+        # Ignore after 2nd argument
+        if not self.working or (len(line.split()) + line.endswith(" ") > 3):
+            return []
 
         valid = [el.name.value for el in self.working["elements"]]
         return [s for s in valid if s.startswith(text)]
@@ -566,8 +566,8 @@ class ModuleEditor(cmd.Cmd):
     def complete_rm(self, text, line, begidx, endidx):
         # Complete comp names if comp is open; else complete element names
         if not self.working:
-            # Ignore after first argument
-            if len(line.split()) + line.endswith(" ") > 2: 
+            # Ignore after 2nd argument
+            if len(line.split()) + line.endswith(" ") > 3: 
                 return []
             
             valid = [os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)]
