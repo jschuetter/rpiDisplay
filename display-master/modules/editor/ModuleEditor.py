@@ -8,7 +8,7 @@ import cmd
 from modules.src import Elements
 from ElementEditor import ElementEditor
 import cli
-from cli import parse, print_props
+from cli import parse
 
 import os, re, json
 import logging
@@ -220,25 +220,43 @@ class ModuleEditor(cmd.Cmd):
     def do_ls(self, line):
         '''Print list of elements in current directory
         
-        Usage: ls [?obj]
+        Usage: ls [-l] [?obj]
         
+        -l
+            Lists properties of object(s) queried
+
         obj: str (optional)
             Name of object to print
             Prints object properties'''
         
         args = parse(line)
+        doPrintProps = False
+
+        # Capture options
+        if args: 
+            if args[0] == "-l": 
+                doPrintProps = True
+                del args[0]
 
         if not args: 
             if not self.working: 
                 # If no open comp, print composition files
                 print(*[os.path.splitext(p)[0] for p in os.listdir(SRC_PATH)], sep="\t\t")
             else: 
-                print(*[el.name.value for el in self.working["elements"]], sep="\t\t")
+                # Else, print elements
+                if doPrintProps:    # Print all property values if option is selected
+                    for el in self.working["elements"]: 
+                        print(el.name.value)
+                        el.print_props() 
+                        print()     # Add extra line after each element
+                else: 
+                    print(*[el.name.value for el in self.working["elements"]], sep="\t\t")
             return
         else: 
             for el in self.working["elements"]:
                 if el.name.value == args[0]:
-                    print_props(el)
+                    el.print_props()
+                    print()
                     return
         print("Object not found.\n")
         self.do_help("ls")

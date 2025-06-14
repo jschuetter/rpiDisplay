@@ -131,6 +131,13 @@ class MatrixElement:
     def json(self) -> dict:
         return self.__dict__
 
+    def print_props(self) -> None: 
+        for k, v in self.__dict__.items():
+            if isinstance(v, Property):
+                print(f"{k}: {v.value}")
+            else: 
+                print(f"{k}: {v}")
+
 #region primitiveElements
 
 class RectElement(MatrixElement):
