@@ -35,8 +35,8 @@ ELEMENT_CLASS_NAMES = { class_:name_ for name_, class_ in ELEMENT_TYPES.items()}
 
 # Provide definitions for common helper functions (those not dealing with display/element operations)
 #   outside class definition (also provided inside for consistency)
-def parse(line: str) -> tuple:
-    'Convert space-delimited arguments to tuple of strings'
+def parse(line: str) -> list:
+    'Convert space-delimited arguments to list of strings'
     argsList = line.split()
 
     # Quotation checking
@@ -64,24 +64,11 @@ def parse(line: str) -> tuple:
 
     if needCloseQuote: 
         print ("ERROR: no close quotation found")
-        return tuple()
+        return list()
 
-    args = tuple(argsList)
+    args = list(argsList)
     log.debug(args)
     return args
-
-def print_props(obj: Any):
-    '''Print all object properties and their values in formatted output
-    
-    obj: Any
-        Object to print'''
-    
-    for k, v in vars(obj).items():
-        if isinstance(v, Elements.Property):
-            print(f"{k}: {v.value}")
-        else: 
-            print(f"{k}: {v}")
-
 
 # Export method
 # Define boilerplate code to follow class header in exported modules
