@@ -1,20 +1,21 @@
 #!/bin/python
 '''
 Raspberry Pi RGB Matrix Display Project
-Version 0.1.0
+Version 0.1.1
 Jacob Schuetter
 
 Project history: 
 - First commit: 19 Jun 2024
-- Last commit: 16 Feb 2025
+- Last commit: 14 Jun 2025
 v0.0.1: main.py created, handles running modules behind CLI "controller"; modules updated to class scheme
 v0.0.2: logging module implemented, to both alternate terminal ouptut and file output
 v0.1.0: first working version of editor module added
+v0.1.1: abstracted canvas objects to global scope for more efficient resource sharing
 
 This file: 
 Current version contains command-line interface for calling existing modules from project root directory
 - Created: 09 Feb 2025
-- Updated 22 May 2025
+- Updated 14 Jun 2025
 '''
 
 from cmd import Cmd
@@ -77,11 +78,12 @@ import time
 
 # Define matrix from config file
 matrix = config.matrix_from_env()
+main_canvas = matrix.CreateFrameCanvas()
 
 def clearMatrix():
     'Basic helper method for clearing matrix after module stop'
-    blank = matrix.CreateFrameCanvas()
-    matrix.SwapOnVSync(blank)
+    main_canvas.Clear()
+    matrix.SwapOnVSync(main_canvas)
 
 modRunning = False # Indicates whether a module is currently running
 modThread = None
@@ -108,7 +110,7 @@ class MyShell(Cmd):
         
         (modname,) = arg.split()
         try:
-            mod = MODULES[modname](matrix)
+            mod = MODULES[modname](matrix, main_canvas)
             log.info(f"Started module {modname}")
             modRunning = True
         except KeyError as e:
@@ -117,10 +119,10 @@ class MyShell(Cmd):
 
         mod.draw()
 
-        if mod.doloop:
+        if mod.do_loop:
             modThread = ThreadLoop(mod.delay, mod.loop)
 
-        # while mod.doloop: 
+        # while mod.do_loop: 
         #     mod.loop()
         #     time.sleep(mod.delay)
 

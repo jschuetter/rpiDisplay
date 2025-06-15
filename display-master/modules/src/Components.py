@@ -39,7 +39,7 @@ from datetime import datetime as dt
 from datetime import tzinfo
 import pytz
 
-class Component():
+class Component:
     '''Parent class for all Component objects'''
 
     @typechecked

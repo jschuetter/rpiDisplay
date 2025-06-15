@@ -12,6 +12,7 @@ v1.0: 20 May 2025
 - First fully-functioning version with basic Element types
 v1.1: 14 Jun 2025
 - Misc. QOL improvements
+- Added inheritance from Module class
 '''
 
 # RGB Matrix dependencies
@@ -21,13 +22,10 @@ from config import FONTS_PATH
 
 # CLI dependencies
 import cmd
-# from modules.src import Elements
+from modules.Module import Module
 import Elements
 from ElementEditor import ElementEditor
 from ModuleEditor import ModuleEditor
-import cli # Relevant global vars & methods
-# from cli import parse, \
-    # refresh_canvas, write_json, print_props, update_all
 
 import os, re, json
 import logging
@@ -41,19 +39,17 @@ from copy import deepcopy
 import logging
 log = logging.getLogger(__name__)
 
-class Editor: 
-    doloop = 0
-    delay = 1
+class Editor(Module):
 
-    def __init__(self, matrix): 
-        self.matrix = matrix
-        self.canvas = self.matrix.CreateFrameCanvas()
+    def __init__(self, matrix, canvas): 
+        '''
+        Additional Parameters
+        ----------------------
+        medit: ModuleEditor
+            Custom CLI based on Python cmd module used to lay out modules
+        '''
+        super().__init__(matrix, canvas)
         self.medit = ModuleEditor(self.matrix, self.canvas)
-        self.doloop = 0
 
     def draw(self):
         self.medit.cmdloop()
-
-    def loop(self): 
-        # Define loop method by convention; this one does nothing
-        return
