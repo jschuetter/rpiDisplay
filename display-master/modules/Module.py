@@ -40,4 +40,5 @@ class Module:
     
     def loop(self): 
         '''Code to run on every subsequent frame update'''
+        self.update()
         self.draw()
