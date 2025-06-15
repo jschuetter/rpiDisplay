@@ -7,6 +7,7 @@ https://stackoverflow.com/questions/474528/how-to-repeatedly-execute-a-function-
 '''
 
 from threading import Timer
+import traceback
 
 import logging
 log = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class ThreadLoop(object):
         except Exception as e: 
             self.stop()
             log.error(e)
+            log.debug(traceback.format_exc())
 
     def start(self):
         if not self.is_running:
