@@ -64,7 +64,6 @@ for idx in range(0, num_frames):
     # must copy the frame out of the gif, since thumbnail() modifies the image in-place
     frames.append(gif.copy())
     frames[-1].thumbnail((to_width, to_height), Image.ANTIALIAS)
-    frames[-1].convert("RGB")
 # Close the gif file to save memory now that we have copied out all of the frames
 gif.close()
 

@@ -29,7 +29,7 @@ from elementhelpers import *
 # Primitive elements 
 import numpy as np
 # IconElement, Primitive elements
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageSequence
 # TextElement
 import webcolors
 from pathlib import Path
@@ -902,9 +902,43 @@ class TickerText(ScrollingText):
             self.msg_x[idxMod] += self.rate
             idx += 1
 
-        # Update index list
-        # self.update_msg_idx = [i for i in self.update_msg_idx if i not in idxToRemove]
-        # self.update_msg_idx.extend(idxToAdd)
-        
+class Anim(Component): 
+    '''Draw a .gif animation directly to matrix'''
 
+    @typechecked
+    def __init__(self, x_: int, y_: int, path: str):
+        '''
+        Parameters: 
+        -------------
+        x_: int
+            x position
+        y_: int
+            y position
+        path: str
+            Path of .gif file to use
+            N.B. must be in .gif format
+        '''
+
+        super().__init__(x_, y_)
+        if not os.path.exists(path): 
+            raise ValueError("Path does not exist!")
+        elif not path.endswith(".gif"): 
+            raise ValueError("Path must be an image in .gif format")
+        self.path = path        # Do we need to store this?
+        self.frames = []
+        self.frame_idx = 0
+        with Image.open(path) as img:
+            for frame in ImageSequence.Iterator(img):
+                # Convert each frame to RGB
+                rgb_frame = frame.convert("RGB")
+                # Append the converted frame to the list
+                self.frames.append(rgb_frame)
+    
+    def draw(self, canvas: FrameCanvas):
+        canvas.SetImage(self.frames[self.frame_idx], self.x, self.y)
+        # Increment frame index
+        self.frame_idx += 1
+        if self.frame_idx >= len(self.frames): 
+            self.frame_idx = 0
+        
 #endregion
