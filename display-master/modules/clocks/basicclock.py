@@ -12,6 +12,7 @@ v2.0: 12 Feb 2025
 '''
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from modules.Module import Module
 from datetime import datetime as dt
 import time, pytz
 from config import FONTS_PATH
@@ -45,33 +46,23 @@ dateFont.LoadFont(DATE_FONT_PATH)
 fontColor = graphics.Color(*FONT_COLOR)
 
 # Define BasicClock as class
-class BasicClock: 
-    # Define loop delay constant (in seconds)
-    delay = 1
-    doloop = 1
+class BasicClock(Module): 
 
-
-    def __init__(self, matrix):
-        # Create cache canvas
-        self.matrix = matrix
-        self.nextCanvas = self.matrix.CreateFrameCanvas()
+    def __init__(self, matrix, canvas):
+        super().__init__(matrix, canvas, doLoop=True, delay=1)
 
     # Continuously run on loop
     def draw(self):
-
         # Update clock
-        self.nextCanvas.Clear()
+        self.canvas.Clear()
         now = dt.now(tz=TZ_EST)
         # Draw date text, then time
-        graphics.DrawText(self.nextCanvas, dateFont, DATE_X, DATE_Y, fontColor, 
+        graphics.DrawText(self.canvas, dateFont, DATE_X, DATE_Y, fontColor, 
                 now.strftime(DATE_FORMAT))
         if MILITARY_TIME:
-            graphics.DrawText(self.nextCanvas, timeFont, TIME_X, TIME_Y, fontColor, 
+            graphics.DrawText(self.canvas, timeFont, TIME_X, TIME_Y, fontColor, 
                 now.strftime(TIME_FORMAT_24))
         else:
-            graphics.DrawText(self.nextCanvas, timeFont, TIME_X-1, TIME_Y, fontColor, 
+            graphics.DrawText(self.canvas, timeFont, TIME_X-1, TIME_Y, fontColor, 
                 now.strftime(TIME_FORMAT_12))
-        self.nextCanvas = self.matrix.SwapOnVSync(self.nextCanvas)
-
-    def loop(self):
-        self.draw()
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
