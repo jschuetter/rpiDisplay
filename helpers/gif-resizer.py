@@ -7,7 +7,7 @@ Jacob Schuetter
 Helper script for resizing GIF animations for display on matrix
 '''
 import sys, os
-
+from progressBar import printProgress
 from PIL import Image
 
 
@@ -61,7 +61,9 @@ for idx in range(0, num_frames):
     gif.seek(idx)
     # must copy the frame out of the gif, since thumbnail() modifies the image in-place
     frames.append(gif.copy())
-    frames[-1].thumbnail((to_width, to_height), Image.ANTIALIAS)
+    frames[-1].thumbnail((to_width, to_height), Image.Resampling.LANCZOS)
+    printProgress(idx + 1, num_frames)
+
 # Close the gif file to save memory now that we have copied out all of the frames
 gif.close()
 

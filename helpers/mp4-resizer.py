@@ -5,10 +5,13 @@ mp4-resizer.py
 Jacob Schuetter
 
 MP4-to-gif video converter & resizer for use in Anim component
+NOTE: this script is very slow. It may be preferable to copy it to a 
+larger machine and pre-process videos there before copying to a Pi. 
 '''
 import sys, os
 import av
 from PIL import Image
+from progressBar import printProgress
 
 if len(sys.argv) < 4:
     sys.exit("Usage: mp4-resizer.py    inPath    width    height    [fps]")
@@ -57,10 +60,13 @@ output_file = file_base + "-resized.gif"
 # Downscale
 print("Processing...")
 frames = []
+# Get number of frames for progress bar
+num_frames = vidStream.frames
 for pkt in vid.demux(vidStream):
     for frame in pkt.decode():
         # Convert frame to PIL
         frames.append(frame.to_image())
-        frames[-1].thumbnail((to_width, to_height), Image.ANTIALIAS)
+        frames[-1].thumbnail((to_width, to_height), Image.Resampling.LANCZOS)
+        printProgress(len(frames), num_frames)
     
 frames[0].save(output_file, save_all=True, append_images=frames[1:], duration=delay, loop=0)
