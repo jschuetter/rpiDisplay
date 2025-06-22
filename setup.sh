@@ -10,3 +10,4 @@ popd
 # Install other dependencies
 python3 -m pip install --upgrade pip
 sudo pip3 install -U -r requirements.txt
+sudo apt install ffmpeg

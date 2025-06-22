@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 '''
 gif-resizer.py
-14 Jun 2025
+22 Jun 2025
 Jacob Schuetter
 
 Helper script for resizing GIF animations for display on matrix
 '''
-import time, sys, os
+import sys, os
 
 from PIL import Image
 
@@ -34,9 +34,6 @@ except Exception:
 
 try: 
     to_width = int(to_width)
-except ValueError: 
-    sys.exit("Width and height must be integers")
-try: 
     to_height = int(to_height)
 except ValueError: 
     sys.exit("Width and height must be integers")
@@ -53,6 +50,7 @@ else:
         sys.exit("FPS value must be int or float")
     delay = 1000 // to_fps
 
+# Declare output
 file_base, _ = os.path.splitext(input_file)
 output_file = file_base + "-resized.gif"
 
@@ -67,4 +65,4 @@ for idx in range(0, num_frames):
 # Close the gif file to save memory now that we have copied out all of the frames
 gif.close()
 
-frames[0].save(output_file, save_all=True, append_images=frames[1:], duration=200, loop=0)
+frames[0].save(output_file, save_all=True, append_images=frames[1:], duration=delay, loop=0)
