@@ -1,29 +1,8 @@
 #!/bin/python
-# Import config module
-# import sys
-# sys.path.insert(0, "../..") # For config module
-# sys.path.insert(1, "../src") # For modules in this folder
-
-# import config
-# from config import FONTS_PATH
-
-# from copy import deepcopy
-# from typing import Any, NewType
 import os, json, webcolors
 
-# from rgbmatrix import FrameCanvas, graphics
-
-# def add_param(name: str, type_: type, desc: str, optional: bool = False) -> dict:
-#     '''Helper method for creating parameter dictionaries more concisely
-    
-#     Returns dict containing param data'''
-#     return {
-#         "name": name,
-#         "type": type_,
-#         "description": desc, 
-#         "optional": optional
-#     }
 def print_params(params):
+    '''Print parameters and documentation of an Element object'''
     paramDocs = ""
     for p in params:
         paramDocs += p.pretty_print()
@@ -35,6 +14,7 @@ class CEnc(json.JSONEncoder):
 
         
 def colorFormat(obj) -> list: 
+    '''Automatically format hex or webcolor values to RGB format.'''
     if type(obj.color.value) is list: 
         return obj.color.value
 
