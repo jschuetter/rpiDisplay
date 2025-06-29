@@ -159,6 +159,7 @@ samples/
 notes/
 display-master/.swp
 display-master/modules/editor/srcFiles/
+display-master/modules/exports/
 keebTest.py
 display-master/modules/testmodule.py
 .vscode/
