@@ -888,7 +888,7 @@ class TextElement(MatrixElement):
         elif (
             not os.path.isfile(fontPath)
             or not fontPath.endswith(cls.font_type)
-            or not Path(fontPath).is_relative_to(Path(fontFamilyPath))
+            or not is_relative_to(Path(fontPath), Path(fontFamilyPath))
             ): 
             return "Invalid font path."
         # Arg 4: color (name or hex)

@@ -30,3 +30,14 @@ def colorFormat(obj) -> list:
         colorRgb = webcolors.name_to_rgb(obj.color.value)
     
     return list(colorRgb)
+
+def is_relative_to(childPath, parentPath)-> bool:
+    '''
+    Check if a path is relative to the current working directory
+    Patches pathlib method only available in Python 3.9+
+    '''
+    try:
+        childPath.relative_to(parentPath)
+        return True
+    except ValueError:
+        return False
