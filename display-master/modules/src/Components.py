@@ -710,6 +710,30 @@ class RasterImage(Icon):
             imgTransform.thumbnail(thumbnailSize)
         self.img = imgTransform.convert("RGB")
 
+class PILImage(Component): 
+    '''Draw a PIL Image object to matrix'''
+
+    @typechecked
+    def __init__(self, x_: int, y_: int, img_: Image):
+        '''
+        Parameters: 
+        -------------
+        x_: int
+            x position
+        y_: int
+            y position
+        img: Image
+            PIL Image object to draw to matrix
+        '''
+
+        super().__init__(x_, y_)
+        if not isinstance(img_, Image.Image): 
+            raise ValueError("img must be of type Image!")
+        self.img = img_.convert("RGB")
+    
+    def draw(self, canvas: FrameCanvas):
+        canvas.SetImage(self.img, self.x, self.y)
+    
 #endregion
 
 #region complex components
