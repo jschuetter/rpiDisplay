@@ -65,12 +65,13 @@ from ThreadLoop import ThreadLoop
 from clocks.basicclock import BasicClock
 from editor.base import Editor
 from testmodule import TestModule
-# from fonttest import Fonttest
+from weather.base import Weather
 MODULES_PATH = "./display-master/modules"
 MODULES = {
     "basicclock": BasicClock,
     "editor": Editor,
-    "testmodule": TestModule
+    "weather": Weather,
+    "testmodule": TestModule,
 }
 
 # Other dependencies
