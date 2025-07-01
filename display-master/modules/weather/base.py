@@ -28,35 +28,6 @@ from PIL import Image, ImageDraw
 import webcolors
 from pathlib import Path
 
-# ImageElement 'icon'
-#   Path: display-master/modules/weather/assets/sun.png
-#   Pos: [1, 2]
-#   Size: 18
-
-# TextElement 'precip'
-#   Text: /20%
-#   Font: fonts/uushi/uushi.bdf
-#   Color: #ffffff
-#   Pos: [38, 20]
-
-# TextElement 'details'
-#   Text: 63°
-#   Font: fonts/sq/sqb.bdf
-#   Color: #ffffff
-#   Pos: [20, 20]
-
-# TextElement 'conditions'
-#   Text: Sunny
-#   Font: fonts/basic/5x8.bdf
-#   Color: #ffffff
-#   Pos: [21, 7]
-
-# TextElement 'location'
-#   Text: Cincinnati
-#   Font: fonts/basic/5x7.bdf
-#   Color: #ffffff
-#   Pos: [1, 31]
-
 class Weather(Module):
     '''
     Simple weather display based on wttr.in.
@@ -68,6 +39,17 @@ class Weather(Module):
     ASSETS_PATH = "display-master/modules/weather/assets/"
     API_BASE_URL = "https://wttr.in/"
     ICON_LIB = constants.GLASSMORPHISM_ICON_MAP
+    ICON_SIZE = 18  # Size of the icon
+
+    def set_components(self): 
+        detailTextHeight = 6 + self.icon.height // 2
+        self.components = [
+            PILImage(2, 8, self.icon),
+            Text(1, 31, self.location_name, font="basic/5x7.bdf"),       # Location text
+            Text(1, 7, self.data["conditions"], font="basic/5x8.bdf"),          # Conditions text
+            Text(self.ICON_SIZE + 2, 8 + detailTextHeight, self.data["temperature"], font="sq/sqb.bdf"),           # Temperature text
+            Text(self.ICON_SIZE + 21, 8 + detailTextHeight + 1, self.data["precip_chance"], font="uushi/uushi.bdf"),    # Precipitation chance text
+        ]
 
     def __init__(self, matrix, canvas, location=""):
         '''
@@ -82,8 +64,8 @@ class Weather(Module):
         super().__init__(matrix, canvas, delay=5)
         # Declare dynamic values
         self.data = {
-            "conditions": "",
             "conditionCode": 0,
+            "conditions": "",
             "temperature": "",
             "precip_chance": "",
             "moonphase": "",
@@ -102,22 +84,13 @@ class Weather(Module):
             "lang": "en",    # Language
         }
 
-        # Icon background - icon added later by compositing
-        self.ICON_SIZE = 18         # Size of the icon  
-        self.icon_bg = Image.new(
-            "RGBA", 
-            (self.ICON_SIZE, self.ICON_SIZE), 
-            (0, 0, 0, 255)
-        )
-        self.icon = self.icon_bg    # Initialize icon object to blank
-
-        self.components = [
-            PILImage(0, 0, self.icon),
-            Text(1, 31, self.location_name, font="basic/5x7.bdf"),       # Location text
-            Text(21, 7, self.data["conditions"], font="basic/5x8.bdf"),          # Conditions text
-            Text(20, 20, self.data["temperature"], font="sq/sqb.bdf"),           # Temperature text
-            Text(38, 20, self.data["precip_chance"], font="uushi/uushi.bdf"),    # Precipitation chance text
-        ]
+        # self.icon_bg = Image.new(
+        #     "RGBA", 
+        #     (self.ICON_SIZE, self.ICON_SIZE), 
+        #     (0, 0, 0, 255)
+        # )
+        self.icon = Image.new("RGB", (self.ICON_SIZE, self.ICON_SIZE), (0,0,0))    # Initialize icon object to blank
+        self.set_components
         
     # Initial frame draw
     def draw(self):
@@ -135,8 +108,8 @@ class Weather(Module):
 
             # Parse weather data & format for display
             # self.location_name = data['nearest_area'][0]['areaName'][0]['value']
-            self.data["conditions"] = data["current_condition"][0]["weatherDesc"][0]["value"]
             self.data["conditionCode"] = int(data["current_condition"][0]["weatherCode"])
+            self.data["conditions"] = constants.WWO_CODE[self.data["conditionCode"]]
             if not self.use_feelslike: 
                 self.data["temperature"] = f"{data['current_condition'][0]['temp_F']}°" if self.fahrenheit else f"{data['current_condition'][0]['temp_C']}°"
             else: 
@@ -149,7 +122,7 @@ class Weather(Module):
                 # If in last hour block, wrap to tomorrow's forecast
                 next_hour_idx = 0
                 today_idx = 1
-            self.data["precip_chance"] = f"{data['weather'][today_idx]['hourly'][next_hour_idx]['chanceofrain']}%"
+            self.data["precip_chance"] = f"/{data['weather'][today_idx]['hourly'][next_hour_idx]['chanceofrain']}%"
 
             # Astronomical data
             self.data["moonphase"] = data["weather"][today_idx]["astronomy"][0]["moon_phase"]
@@ -185,10 +158,5 @@ class Weather(Module):
         self.icon = Image.alpha_composite(blackBg, iconTemp)
         self.icon = self.icon.convert("RGB")  # Convert to RGB for compatibility with RGBMatrix
 
-        self.components = [
-            PILImage(0, 0, self.icon),
-            Text(1, 31, self.location_name, font="basic/5x7.bdf"),       # Location text
-            Text(21, 7, self.data["conditions"], font="basic/5x8.bdf"),          # Conditions text
-            Text(20, 20, self.data["temperature"], font="sq/sqb.bdf"),           # Temperature text
-            Text(38, 20, self.data["precip_chance"], font="uushi/uushi.bdf"),    # Precipitation chance text
-        ]
+        # Update components
+        self.set_components()

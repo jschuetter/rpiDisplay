@@ -38,6 +38,10 @@ class Module:
             c.draw(self.canvas)
         self.matrix.SwapOnVSync(self.canvas)
 
+    def set_components(self):
+        '''Method for setting component positions & values'''
+        self.components = []
+
     def update(self): 
         '''Optional method for updating module data (e.g. fetching from API)'''
         return
