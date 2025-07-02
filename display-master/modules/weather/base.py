@@ -43,6 +43,7 @@ class Weather(Module):
     BRIGHTEN_ICON = True
     BRIGHTEN_FACTOR = 3
     ICON_SIZE = 18  # Size of the icon
+    BACKGROUND_COLOR = (0,0,64)
 
     def set_components(self): 
         detailTextHeight = 6 + self.icon.height // 2
@@ -53,6 +54,9 @@ class Weather(Module):
             Text(self.ICON_SIZE + 3, 8 + detailTextHeight, self.data["temperature"], font="sq/sqb.bdf"),           # Temperature text
             Text(self.ICON_SIZE + 22, 8 + detailTextHeight + 1, self.data["precip_chance"], font="uushi/uushi.bdf"),    # Precipitation chance text
         ]
+        if self.bg: 
+            # If background color is not black, add background component first in stack
+            self.components.insert(0, PILImage(0, 0, self.bg))
 
     def __init__(self, matrix, canvas, location=""):
         '''
@@ -87,13 +91,14 @@ class Weather(Module):
             "lang": "en",    # Language
         }
 
-        # self.icon_bg = Image.new(
-        #     "RGBA", 
-        #     (self.ICON_SIZE, self.ICON_SIZE), 
-        #     (0, 0, 0, 255)
-        # )
-        self.icon = Image.new("RGB", (self.ICON_SIZE, self.ICON_SIZE), (0,0,0))    # Initialize icon object to blank
-        self.set_components
+        self.icon = Image.new("RGB", (self.ICON_SIZE, self.ICON_SIZE), self.BACKGROUND_COLOR)    # Initialize icon object to blank
+        if self.BACKGROUND_COLOR != (0, 0, 0): 
+            # If background color is not black, add background component
+            self.bg = Image.new("RGB", (self.matrix.width, self.matrix.height), self.BACKGROUND_COLOR)
+        else: 
+            self.bg = None
+
+        self.set_components()
         
     # Initial frame draw
     def draw(self):
@@ -160,7 +165,7 @@ class Weather(Module):
             # Brighten icon if enabled
             enhancer = ImageEnhance.Brightness(iconTemp)
             iconTemp = enhancer.enhance(self.BRIGHTEN_FACTOR)
-        blackBg = Image.new("RGBA", iconTemp.size, (0, 0, 0, 255))
+        blackBg = Image.new("RGBA", iconTemp.size, (*self.BACKGROUND_COLOR, 255))
         # iconTemp = iconTemp.convert("RGBA")
         self.icon = Image.alpha_composite(blackBg, iconTemp)
         self.icon = self.icon.convert("RGB")  # Convert to RGB for compatibility with RGBMatrix
