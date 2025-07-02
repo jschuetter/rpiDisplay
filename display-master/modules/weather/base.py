@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 # Element dependencies
 # IconElement
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 # TextElement
 import webcolors
 from pathlib import Path
@@ -38,7 +38,10 @@ class Weather(Module):
 
     ASSETS_PATH = "display-master/modules/weather/assets/"
     API_BASE_URL = "https://wttr.in/"
-    ICON_LIB = constants.GLASSMORPHISM_ICON_MAP
+    # ICON_LIB = constants.GLASSMORPHISM_ICON_MAP
+    ICON_LIB = constants.MINIMALIST_ICON_MAP
+    BRIGHTEN_ICON = True
+    BRIGHTEN_FACTOR = 3
     ICON_SIZE = 18  # Size of the icon
 
     def set_components(self): 
@@ -47,8 +50,8 @@ class Weather(Module):
             PILImage(2, 8, self.icon),
             Text(1, 31, self.location_name, font="basic/5x7.bdf"),       # Location text
             Text(1, 7, self.data["conditions"], font="basic/5x8.bdf"),          # Conditions text
-            Text(self.ICON_SIZE + 2, 8 + detailTextHeight, self.data["temperature"], font="sq/sqb.bdf"),           # Temperature text
-            Text(self.ICON_SIZE + 21, 8 + detailTextHeight + 1, self.data["precip_chance"], font="uushi/uushi.bdf"),    # Precipitation chance text
+            Text(self.ICON_SIZE + 3, 8 + detailTextHeight, self.data["temperature"], font="sq/sqb.bdf"),           # Temperature text
+            Text(self.ICON_SIZE + 22, 8 + detailTextHeight + 1, self.data["precip_chance"], font="uushi/uushi.bdf"),    # Precipitation chance text
         ]
 
     def __init__(self, matrix, canvas, location=""):
@@ -153,6 +156,10 @@ class Weather(Module):
             iconTemp = Image.open(iconPath)
         # Resize image
         iconTemp.thumbnail((self.ICON_SIZE, self.ICON_SIZE), Image.Resampling.LANCZOS)
+        if self.BRIGHTEN_ICON:
+            # Brighten icon if enabled
+            enhancer = ImageEnhance.Brightness(iconTemp)
+            iconTemp = enhancer.enhance(self.BRIGHTEN_FACTOR)
         blackBg = Image.new("RGBA", iconTemp.size, (0, 0, 0, 255))
         # iconTemp = iconTemp.convert("RGBA")
         self.icon = Image.alpha_composite(blackBg, iconTemp)
