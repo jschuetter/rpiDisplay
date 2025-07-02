@@ -14,6 +14,7 @@ from modules.Module import Module
 from Components import *
 import requests, json
 from datetime import datetime as dt
+from datetime import timedelta
 import constants
 import time
 
@@ -58,7 +59,7 @@ class Weather(Module):
             # If background color is not black, add background component first in stack
             self.components.insert(0, PILImage(0, 0, self.bg))
 
-    def __init__(self, matrix, canvas, location=""):
+    def __init__(self, matrix, canvas, location="", *, useFeelsLike = False, degF = True):
         '''
         Parameters
         -----------
@@ -84,8 +85,8 @@ class Weather(Module):
         # Module settings
         self.location_name = location
         self.locale = location.replace(" ", "+") # Location setting for weather API (spaces replaced with '+')
-        self.fahrenheit = True      # Default to Fahrenheit
-        self.use_feelslike = False  # Use 'feels like' temperature
+        self.fahrenheit = degF      # Default to Fahrenheit
+        self.use_feelslike = useFeelsLike  # Use 'feels like' temperature
         self.query_params = {
             "format": "j1",  # JSON format
             "lang": "en",    # Language
@@ -98,8 +99,6 @@ class Weather(Module):
         else: 
             self.bg = None
 
-        self.set_components()
-        
     # Initial frame draw
     def draw(self):
         self.update()
@@ -165,10 +164,80 @@ class Weather(Module):
             # Brighten icon if enabled
             enhancer = ImageEnhance.Brightness(iconTemp)
             iconTemp = enhancer.enhance(self.BRIGHTEN_FACTOR)
-        blackBg = Image.new("RGBA", iconTemp.size, (*self.BACKGROUND_COLOR, 255))
-        # iconTemp = iconTemp.convert("RGBA")
-        self.icon = Image.alpha_composite(blackBg, iconTemp)
+        bg = Image.new("RGBA", iconTemp.size, (*self.BACKGROUND_COLOR, 255))
+        self.icon = Image.alpha_composite(bg, iconTemp)
         self.icon = self.icon.convert("RGB")  # Convert to RGB for compatibility with RGBMatrix
+
+        # Update components
+        self.set_components()
+
+
+class WeatherForecast(Weather):
+    '''Weather display for tomorrow's forecast.'''
+
+    def __init__(self, matrix, canvas, daysAhead=1, location="MCO", *, useFeelsLike = False, degF = True):
+        super().__init__(matrix, canvas, location, useFeelsLike=useFeelsLike, degF=degF)
+
+        self.days_ahead = daysAhead  # Number of days ahead to forecast
+        if daysAhead > 2 or daysAhead < 1: 
+            log.error("WeatherForecast only supports 1 or 2 days ahead.")
+            sys.exit()
+
+        if daysAhead == 1: 
+            self.day_name = "Tomorrow"
+        elif daysAhead == 2: 
+            self.day_name = dt.now() + timedelta(days=2).strftime("%A")  # Get day name for 2 days ahead
+
+        # Set static icon
+        iconPath = self.ASSETS_PATH + self.ICON_LIB["dir_name"] + self.ICON_LIB["day"][116]
+        iconTemp = Image.open(iconPath)
+        # Resize image
+        iconTemp.thumbnail((self.ICON_SIZE, self.ICON_SIZE), Image.Resampling.LANCZOS)
+        if self.BRIGHTEN_ICON:
+            # Brighten icon if enabled
+            enhancer = ImageEnhance.Brightness(iconTemp)
+            iconTemp = enhancer.enhance(self.BRIGHTEN_FACTOR)
+        bg = Image.new("RGBA", iconTemp.size, (*self.BACKGROUND_COLOR, 255))
+        self.icon = Image.alpha_composite(bg, iconTemp)
+        self.icon = self.icon.convert("RGB")  # Convert to RGB for compatibility with RGBMatrix
+
+
+    def set_components(self): 
+        detailTextHeight = 6 + self.icon.height // 2
+        self.components = [
+            PILImage(43, 1, self.icon),
+            Text(1, 7, self.day_name, font="basic/5x8.bdf"),          # Header text
+            Text(1, 19, f"{self.data['tempLow']}/{self.data['tempHigh']}°", font="sq/sqb.bdf"),           # Temperature text
+            Text(1, 30, f"{self.data['precip_chance']}% {self.data['precip_time']}", font="basic/5x8.bdf"),           # Temperature text
+        ]
+        if self.bg: 
+            # If background color is not black, add background component first in stack
+            self.components.insert(0, PILImage(0, 0, self.bg))
+
+    def update(self): 
+        '''Call wttr.in API and draw module background'''
+        # Get data from wttr.in
+        log.info("Fetching weather data...")
+        response = requests.get(self.API_BASE_URL + self.locale, params=self.query_params)
+        if response.status_code == 200:
+            log.info("Successfully retrieved weather data.")
+            data = response.json()
+
+            # Parse weather data & format for display
+            self.data["tempHigh"] = f"{data['weather'][self.days_ahead]['maxtempF']}" if self.fahrenheit else f"{data['weather'][self.days_ahead]['maxtempC']}"
+            self.data["tempLow"] = f"{data['weather'][self.days_ahead]['mintempF']}" if self.fahrenheit else f"{data['weather'][self.days_ahead]['mintempC']}"
+            # Get max. precipitation chance for day
+            self.data["precip_chance"] = "0"
+            self.data["precip_time"] = ""
+            for hour in data["weather"][self.days_ahead]["hourly"]:
+                if int(hour["chanceofrain"]) > int(self.data["precip_chance"]):
+                    self.data["precip_chance"] = hour["chanceofrain"]
+                    self.data["precip_time"] = f"@ {hour['time'][:-2]}:00"
+            
+            self.update_error = False
+        else:
+            log.error(f"Failed to fetch weather data: {response.status_code}")
+            self.update_error = True
 
         # Update components
         self.set_components()
