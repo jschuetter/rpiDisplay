@@ -38,12 +38,12 @@ class Weather(Module):
 
     ASSETS_PATH = "display-master/modules/weather/assets/"
     API_BASE_URL = "https://wttr.in/"
-    # ICON_LIB = constants.GLASSMORPHISM_ICON_MAP
-    ICON_LIB = constants.MINIMALIST_ICON_MAP
+    ICON_LIB = constants.GLASSMORPHISM_ICON_MAP
+    # ICON_LIB = constants.MINIMALIST_ICON_MAP
     BRIGHTEN_ICON = True
     BRIGHTEN_FACTOR = 3
     ICON_SIZE = 18  # Size of the icon
-    BACKGROUND_COLOR = (0,0,64)
+    BACKGROUND_COLOR = (0,32,64)
 
     def set_components(self): 
         detailTextHeight = 6 + self.icon.height // 2
